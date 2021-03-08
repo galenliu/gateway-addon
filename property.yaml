@@ -1,0 +1,129 @@
+AlarmProperty:
+  type: boolean
+
+BarometricPressureProperty:
+  type: number
+
+BooleanProperty:
+  type: boolean
+  unit: hectopascal
+
+BrightnessProperty:
+  type: integer
+  minimum: 0
+  maximum: 100
+  unit: percent
+
+ColorModeProperty:
+  type: string
+  enum:
+    - color
+    - temperature
+
+ColorProperty:
+  type: string
+  unit: kelvin
+
+ColorTemperatureProperty:
+  type: integer
+  unit: kelvin
+
+ConcentrationProperty:
+  type: number
+  minimum: 0
+  unit: ppm
+
+CurrentProperty:
+  type: number
+  unit: ampere
+
+DensityProperty:
+  type: number
+  minimum: 0
+  unit: micrograms per cubic metre
+
+FrequencyProperty:
+  type: number
+    unit: hertz
+
+HeatingCoolingProperty:
+  type: string
+  enum:
+    - off
+    - heating
+    - cooling
+
+HumidityProperty:
+  type: number
+  minimum: 0
+  maximum: 100
+  unit: percent
+
+ImageProperty:
+  type: nul
+
+InstantaneousPowerFactorProperty:
+  type: number
+  minimum: -1
+  maximum: 1
+
+InstantaneousPowerProperty:
+  type: number
+  unit: watt
+
+LeakProperty:
+  type: boolean
+
+LevelProperty:
+  type: number
+  minimum: 0
+  maximum: 0
+  unit: optional
+
+LockedProperty:
+  type: string
+  enum:
+    - locked
+    - unlocked
+    - unknown
+    - jammed
+
+MotionProperty:
+  type: boolean
+
+OnOffProperty:
+  type: boolean
+
+OpenProperty:
+  type: boolean
+
+PushedProperty:
+  type: boolean
+
+SmokeProperty:
+  type: boolean
+
+TargetTemperatureProperty:
+  type: number
+  unit: degree celsius
+
+TemperatureProperty:
+  type: number
+  unit: degree celsius
+
+ThermostatModeProperty:
+  type: number
+  enum:
+    - off
+    - heat
+    - cool
+    - auto
+
+VideoProperty:
+  type: data
+
+VoltageProperty:
+  type: number
+  unit: volt
+
+
