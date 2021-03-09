@@ -23,6 +23,22 @@ func NewLightBulb(id, title string) *LightBulb {
 	return lightBulb
 }
 
+func (light *LightBulb) TurnOn() {
+	light.On.SetValue(true)
+}
+
+func (light *LightBulb) TurnOff() {
+	light.On.SetValue(false)
+}
+
+func (light *LightBulb) Toggle() {
+	if light.On.Value == true {
+		light.TurnOff()
+	} else {
+		light.TurnOn()
+	}
+}
+
 func Color16ToRGB(colorStr string) (red, green, blue int, err error) {
 	color64, err := strconv.ParseInt(strings.TrimPrefix(colorStr, "#"), 16, 32)
 	if err != nil {

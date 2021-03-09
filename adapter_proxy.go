@@ -1,22 +1,31 @@
 package addon
 
 import (
+	"context"
 	"fmt"
+	"sync"
+	"time"
 )
 
+type onPairingFunc func(ctx context.Context)
+type OnCancelPairingFunc func()
+
 type AdapterProxy struct {
+	OnPairing       onPairingFunc
+	OnCancelPairing OnCancelPairingFunc
 	*Adapter
-	addonManager    *AddonManagerProxy
-	OnPairing       func(float64)
-	OnCancelPairing func()
+	addonManager *AddonManagerProxy
+	locker       *sync.Mutex
+	cancelChan   chan struct{}
 }
 
-func NewAdapterProxy(id, name, packageName string) *AdapterProxy {
+func NewAdapterProxy(adapterId, adapterName, packageName string) *AdapterProxy {
 	manager := NewAddonManagerProxy(packageName)
-	adp := &AdapterProxy{Adapter: NewAdapter(manager, id, name, packageName)}
+	adp := &AdapterProxy{Adapter: NewAdapter(manager, adapterId, packageName, packageName)}
 	adp.addonManager = manager
 	adp.addonManager.handleAdapterAdded(adp)
-
+	adp.locker = new(sync.Mutex)
+	adp.cancelChan = make(chan struct{})
 	return adp
 }
 
@@ -25,16 +34,42 @@ func (adapter *AdapterProxy) AddDevice(device *Device) {
 	adapter.HandleDeviceAdded(device)
 }
 
-func (adapter *AdapterProxy) pairing(timeout float64) {
-	if adapter.OnPairing != nil {
-		adapter.OnPairing(timeout)
+func (adapter *AdapterProxy) Pairing(timeout float64) {
+
+	if adapter.IsPairing {
+		fmt.Print("adapter is pairinged")
+		return
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Millisecond)
+	adapter.IsPairing = true
+
+	if adapter.OnPairing != nil {
+		go adapter.OnPairing(ctx)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			cancel()
+			adapter.IsPairing = false
+			return
+		case <-adapter.cancelChan:
+			if adapter.OnCancelPairing != nil {
+				adapter.OnCancelPairing()
+			}
+			cancel()
+			adapter.IsPairing = false
+			return
+		}
+	}
+
 }
 
 func (adapter *AdapterProxy) cancelPairing() {
-	if adapter.OnCancelPairing != nil {
-		adapter.OnCancelPairing()
+	if !adapter.IsPairing {
+		fmt.Print("adapter pairing is canceled \t\n")
+		return
 	}
+	adapter.cancelChan <- struct{}{}
 }
 
 func (adapter *AdapterProxy) HandleDeviceSaved(devId string, dev interface{}) {

@@ -15,19 +15,19 @@ type AddonManagerProxy struct {
 }
 
 var once sync.Once
-var addonManager *AddonManagerProxy
+var instance *AddonManagerProxy
 
 func NewAddonManagerProxy(packageName string) *AddonManagerProxy {
 	once.Do(
 		func() {
-			addonManager = &AddonManagerProxy{}
-			addonManager.AddonManager = NewAddonManager(packageName)
-			addonManager.adapters = make(map[string]*AdapterProxy, 10)
-			addonManager.ipcClient = NewClient(packageName, addonManager.OnMessage)
-			addonManager.Run()
+			instance = &AddonManagerProxy{}
+			instance.AddonManager = NewAddonManager(packageName)
+			instance.adapters = make(map[string]*AdapterProxy, 10)
+			instance.ipcClient = NewClient(packageName, instance.OnMessage)
+			instance.Run()
 		},
 	)
-	return addonManager
+	return instance
 }
 
 func (proxy *AddonManagerProxy) handleAdapterAdded(adapter *AdapterProxy) {
@@ -115,7 +115,7 @@ func (proxy *AddonManagerProxy) OnMessage(data []byte) {
 	//adapter pairing command
 	case AdapterStartPairingCommand:
 		timeout := json.Get(data, "data", "timeout").ToFloat64()
-		go adapter.pairing(timeout)
+		adapter.Pairing(timeout)
 		return
 
 	case AdapterCancelPairingCommand:

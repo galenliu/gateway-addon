@@ -2,6 +2,8 @@ package addon
 
 import (
 	"fmt"
+	json "github.com/json-iterator/go"
+
 	//json "github.com/json-iterator/go"
 )
 
@@ -37,10 +39,10 @@ type PIN struct {
 }
 
 type Device struct {
+	ID                  string   `json:"id"`
 	AtContext           string   `json:"@context,omitempty"`
 	Title               string   `json:"title,required"`
 	AtType              []string `json:"@type"`
-	ID                  string   `json:"id"`
 	Description         string   `json:"description,omitempty"`
 	CredentialsRequired bool     `json:"credentialsRequired"`
 
@@ -48,11 +50,10 @@ type Device struct {
 	Actions    map[string]*Action   `json:"actions,omitempty"`
 	Events     map[string]*Event    `json:"events,omitempty"`
 
-	Pin      PIN `json:"pin,omitempty"`
-	username string
-	password string
-
-	AdapterId string `json:"-"`
+	Pin       PIN `json:"pin,omitempty"`
+	username  string
+	password  string
+	AdapterId string `json:"adapterId"`
 }
 
 func NewDevice(id, title string) *Device {
@@ -157,7 +158,10 @@ func (device *Device) SetPin(pin interface{}) error {
 	return nil
 }
 
-//
-//func (devices *Device) MarshalJSON() ([]byte, error) {
-//	return json.Marshal(devices)
-//}
+func (device *Device) ToJSON() string {
+	data, err := json.MarshalIndent(device, "", " ")
+	if err != nil {
+		return string(data)
+	}
+	return ""
+}
