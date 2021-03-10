@@ -3,7 +3,6 @@ package addon
 import (
 	"fmt"
 	json "github.com/json-iterator/go"
-
 	//json "github.com/json-iterator/go"
 )
 
@@ -40,7 +39,7 @@ type PIN struct {
 
 type Device struct {
 	ID                  string   `json:"id"`
-	AtContext           string   `json:"@context,omitempty"`
+	AtContext           []string `json:"@context,omitempty"`
 	Title               string   `json:"title,required"`
 	AtType              []string `json:"@type"`
 	Description         string   `json:"description,omitempty"`

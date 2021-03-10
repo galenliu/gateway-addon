@@ -31,7 +31,6 @@ func NewAdapter(manager Manager, adapterId, name, packageName string) *Adapter {
 
 func (adapter *Adapter) HandleDeviceAdded(device *Device) {
 	if device == nil {
-		fmt.Sprint("device addon invaild")
 		return
 	}
 	device.AdapterId = adapter.ID
@@ -44,7 +43,7 @@ func (adapter *Adapter) HandleDeviceRemoved(device *Device) {
 	adapter.manager.HandleDeviceAdded(device)
 }
 
-func (adapter *Adapter) GetAdapgerId() string {
+func (adapter *Adapter) GetAdapterId() string {
 	return adapter.ID
 }
 
