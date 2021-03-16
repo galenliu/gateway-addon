@@ -59,6 +59,8 @@ func NewDevice(id, title string) *Device {
 	device := &Device{}
 	device.ID = id
 	device.Title = title
+	device.AtType = make([]string, 0)
+	device.AtContext = make([]string, 0)
 	device.Properties = make(map[string]*Property, 5)
 	device.Actions = make(map[string]*Action, 1)
 	return device
