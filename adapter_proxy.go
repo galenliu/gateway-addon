@@ -1,20 +1,24 @@
 package addon
 
 import (
-	"context"
 	"fmt"
 	"sync"
-	"time"
 )
 
-type onPairingFunc func(ctx context.Context)
+type onPairingFunc func(timeout float64)
 type OnCancelPairingFunc func()
+type OnDeviceSavedFunc func(deivceId string, device *Device)
+type OnSetCredentialsFunc func(deivceId, username, password string)
+type OnSetPinFunc func(deivceId string, pin PIN) error
 
 type AdapterProxy struct {
-	OnPairing       onPairingFunc
-	OnCancelPairing OnCancelPairingFunc
+	OnPairing        onPairingFunc
+	OnCancelPairing  OnCancelPairingFunc
+	OnDeviceSaved    OnDeviceSavedFunc
+	OnSetCredentials OnSetCredentialsFunc
+	OnSetPin         OnSetPinFunc
 	*Adapter
-	addonManager *AddonManagerProxy
+	managerProxy *AddonManagerProxy
 	locker       *sync.Mutex
 	cancelChan   chan struct{}
 }
@@ -22,84 +26,85 @@ type AdapterProxy struct {
 func NewAdapterProxy(adapterId, adapterName, packageName string) *AdapterProxy {
 	manager := NewAddonManagerProxy(packageName)
 	adp := &AdapterProxy{Adapter: NewAdapter(manager, adapterId, packageName, packageName)}
-	adp.addonManager = manager
-	adp.addonManager.handleAdapterAdded(adp)
+	adp.managerProxy = manager
+	adp.managerProxy.handleAdapterAdded(adp)
 	adp.locker = new(sync.Mutex)
 	adp.cancelChan = make(chan struct{})
 	return adp
 }
 
-func (adapter *AdapterProxy) AddDevice(device *Device) {
-	device.AdapterId = adapter.ID
-	adapter.HandleDeviceAdded(device)
+func (proxy *AdapterProxy) HandleDeviceAdded(device *Device) {
+	proxy.Adapter.HandleDeviceAdded(device)
 }
 
-func (adapter *AdapterProxy) Pairing(timeout float64) {
-
-	if adapter.IsPairing {
-		fmt.Print("adapter is pairinged")
-		return
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Millisecond)
-	adapter.IsPairing = true
-
-	if adapter.OnPairing != nil {
-		go adapter.OnPairing(ctx)
-	}
-	for {
-		select {
-		case <-ctx.Done():
-			cancel()
-			adapter.IsPairing = false
-			return
-		case <-adapter.cancelChan:
-			if adapter.OnCancelPairing != nil {
-				adapter.OnCancelPairing()
-			}
-			cancel()
-			adapter.IsPairing = false
-			return
-		}
-	}
-
+func (proxy *AdapterProxy) HandleDeviceRemoved(device *Device) {
+	proxy.Adapter.HandleDeviceRemoved(device)
 }
 
-func (adapter *AdapterProxy) cancelPairing() {
-	if !adapter.IsPairing {
-		fmt.Print("adapter pairing is canceled \t\n")
-		return
-	}
-	adapter.cancelChan <- struct{}{}
+func (proxy *AdapterProxy) SendError(messsage string) {
+	proxy.managerProxy.sendError(proxy.ID, messsage)
 }
 
-func (adapter *AdapterProxy) HandleDeviceSaved(devId string, dev interface{}) {
+//向前端UI发送提示
+func (proxy *AdapterProxy) SendPairingPrompt(promt, url string, device *Device) {
+	proxy.managerProxy.sendPairingPrompt(proxy.Adapter, promt, url, device)
+}
+
+func (proxy *AdapterProxy) SendUnpairingPrompt(promt, url string, device *Device) {
+	proxy.managerProxy.sendPairingPrompt(proxy.Adapter, promt, url, device)
+}
+
+func (proxy *AdapterProxy) handleDeviceSaved(devId string, dev *Device) {
 	fmt.Print("on devices saved on the gateway")
+	if proxy.OnDeviceSaved != nil {
+		proxy.OnDeviceSaved(devId, dev)
+	}
 }
 
-func (adapter *AdapterProxy) Run() {
+func (proxy *AdapterProxy) startPairing(timeout float64) {
+
+	if proxy.IsPairing {
+		fmt.Print("proxy is pairinged")
+		return
+	}
+	if proxy.OnPairing != nil {
+		go proxy.OnPairing(timeout)
+	}
+
 }
 
-func (adapter *AdapterProxy) Unload() {
-	fmt.Printf("adapter unload, AdapterId:%v", adapter.ID)
+func (proxy *AdapterProxy) setCredentials(deivceId, username, password string) {
+	if proxy.OnSetCredentials != nil {
+		go proxy.OnSetCredentials(deivceId, username, password)
+	}
 }
 
-func (adapter *AdapterProxy) getID() string {
-	return adapter.ID
+func (proxy *AdapterProxy) setPin(deivceId string, pin PIN) error {
+	if proxy.OnSetPin != nil {
+		return proxy.OnSetPin(deivceId, pin)
+	}
+	return nil
 }
 
-func (adapter *AdapterProxy) getPackageName() string {
-	return adapter.PackageName
+func (proxy *AdapterProxy) cancelPairing() {
+	if !proxy.IsPairing {
+		return
+	}
+	proxy.IsPairing = false
+	if proxy.OnCancelPairing != nil {
+		go proxy.OnCancelPairing()
+	}
 }
 
-func (adapter *AdapterProxy) CloseProxy() {
-	fmt.Print("do some thing while adapter close")
+func (proxy *AdapterProxy) Unload() {
+	fmt.Printf("proxy unload, AdapterId:%v", proxy.ID)
 }
 
-func (adapter *AdapterProxy) ProxyRunning() bool {
-	//return adapter.manager.Running()
-	return true
+func (proxy *AdapterProxy) CloseProxy() {
+	fmt.Print("do some thing while proxy close")
+	proxy.managerProxy.close()
 }
 
-func (adapter *AdapterProxy) HandlerDevicePropertyChanged(property *Property) {
-	adapter.addonManager.sendPropertyChangedNotification(property)
+func (proxy *AdapterProxy) ProxyRunning() bool {
+	return proxy.managerProxy.running
 }
