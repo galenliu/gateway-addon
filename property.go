@@ -86,8 +86,11 @@ func (prop *Property) onValueUpdate(funcs []ChangeFunc, newValue, oldValue inter
 }
 
 func (prop *Property) Update(new *Property) {
-	prop = new
-	prop.UpdateValue(new.Value)
+	prop.Value = new.Value
+	prop.Name = new.Name
+	prop.Type = new.Type
+	prop.ReadOnly = new.ReadOnly
+	prop.Title = new.Title
 }
 
 func (prop *Property) convert(v interface{}) interface{} {
