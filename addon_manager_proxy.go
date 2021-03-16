@@ -118,9 +118,8 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 		break
 	}
 	var deviceId = json.Get(data, "data", "deviceId").ToString()
-	device, err := adapter.FindDevice(deviceId)
-	if err != nil {
-		log.Println(err.Error())
+	devx := adapter.getDeviceProxy(deviceId)
+	if devx == nil {
 		return
 	}
 
@@ -131,20 +130,20 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 
 	case DeviceSavedNotification:
 
-		adapter.handleDeviceSaved(deviceId, device)
+		adapter.handleDeviceSaved(deviceId, devx.Device)
 		return
 
 		//adapter remove devices request
 
 	case AdapterRemoveDeviceRequest:
-		adapter.HandleDeviceRemoved(device)
+		adapter.HandleDeviceRemoved(devx)
 
 		//devices set properties command
 
 	case DeviceSetPropertyCommand:
 		propName := json.Get(data, "data", "propertyName").ToString()
 		newValue := json.Get(data, "data", "propertyValue").GetInterface()
-		prop, err := device.FindProperty(propName)
+		prop, err := devx.FindProperty(propName)
 		if err != nil {
 			log.Fatal(err.Error())
 			return
@@ -175,7 +174,7 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 			data := make(map[string]interface{})
 			data[Aid] = adapterId
 			data[Did] = deviceId
-			data["device"] = device
+			data["devx"] = devx
 			data["messageId"] = messageId
 			err := adapter.setPin(deviceId, pin)
 			if err == nil {
@@ -195,11 +194,11 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 		password := json.Get(data, "data", "password").ToString()
 
 		handleFunc := func() {
-			err := device.SetCredentials(username, password)
+			err := devx.SetCredentials(username, password)
 			data := make(map[string]interface{})
 			data[Aid] = adapterId
 			data[Did] = deviceId
-			data["device"] = device
+			data["devx"] = devx
 			data["messageId"] = messageId
 			if err != nil {
 				data["success"] = true
@@ -215,7 +214,14 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 		go handleFunc()
 		break
 	}
+}
 
+func (proxy *AddonManagerProxy) sendConnectedStateNotification(device *Device, connected bool) {
+	data := make(map[string]interface{})
+	data[Aid] = device.AdapterId
+	data[Did] = device.ID
+	data["connected"] = connected
+	proxy.send(DeviceConnectedStateNotification, data)
 }
 
 func (proxy *AddonManagerProxy) sendPropertyChangedNotification(adapterId string, p *Property) {

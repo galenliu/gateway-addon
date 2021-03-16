@@ -12,15 +12,16 @@ type OnSetCredentialsFunc func(deivceId, username, password string)
 type OnSetPinFunc func(deivceId string, pin PIN) error
 
 type AdapterProxy struct {
+	*Adapter
+	devicesProxy     map[string]*DeviceProxy
 	OnPairing        onPairingFunc
 	OnCancelPairing  OnCancelPairingFunc
 	OnDeviceSaved    OnDeviceSavedFunc
 	OnSetCredentials OnSetCredentialsFunc
 	OnSetPin         OnSetPinFunc
-	*Adapter
-	managerProxy *AddonManagerProxy
-	locker       *sync.Mutex
-	cancelChan   chan struct{}
+	managerProxy     *AddonManagerProxy
+	locker           *sync.Mutex
+	cancelChan       chan struct{}
 }
 
 func NewAdapterProxy(adapterId, adapterName, packageName string) *AdapterProxy {
@@ -29,20 +30,27 @@ func NewAdapterProxy(adapterId, adapterName, packageName string) *AdapterProxy {
 	adp.managerProxy = manager
 	adp.managerProxy.handleAdapterAdded(adp)
 	adp.locker = new(sync.Mutex)
+	adp.devicesProxy = make(map[string]*DeviceProxy)
 	adp.cancelChan = make(chan struct{})
 	return adp
 }
 
-func (proxy *AdapterProxy) HandleDeviceAdded(device *Device) {
-	proxy.Adapter.HandleDeviceAdded(device)
+func (proxy *AdapterProxy) HandleDeviceAdded(dx *DeviceProxy) {
+	proxy.devicesProxy[dx.ID] = dx
+	proxy.Adapter.HandleDeviceAdded(dx.Device)
 }
 
-func (proxy *AdapterProxy) HandleDeviceRemoved(device *Device) {
-	proxy.Adapter.HandleDeviceRemoved(device)
+func (proxy *AdapterProxy) HandleDeviceRemoved(dx *DeviceProxy) {
+	delete(proxy.devicesProxy, dx.ID)
+	proxy.Adapter.HandleDeviceRemoved(dx.Device)
 }
 
 func (proxy *AdapterProxy) SendError(messsage string) {
 	proxy.managerProxy.sendError(proxy.ID, messsage)
+}
+
+func (proxy *AdapterProxy) ConnectedNotify(device *Device, connected bool) {
+	proxy.managerProxy.sendConnectedStateNotification(device, connected)
 }
 
 //向前端UI发送提示
@@ -68,7 +76,7 @@ func (proxy *AdapterProxy) startPairing(timeout float64) {
 		return
 	}
 	if proxy.OnPairing != nil {
-		go proxy.OnPairing(timeout)
+		proxy.OnPairing(timeout)
 	}
 
 }
@@ -94,6 +102,10 @@ func (proxy *AdapterProxy) cancelPairing() {
 	if proxy.OnCancelPairing != nil {
 		go proxy.OnCancelPairing()
 	}
+}
+
+func (proxy *AdapterProxy) getDeviceProxy(id string) *DeviceProxy {
+	return proxy.devicesProxy[id]
 }
 
 func (proxy *AdapterProxy) Unload() {
