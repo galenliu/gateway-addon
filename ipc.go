@@ -151,7 +151,7 @@ func (client *IpcClient) readLoop() {
 //
 //	for {
 //		if client.ws != nil && client.status != Disconnect {
-//			_, data, err := client.ws.ReadMessage()
+//			_, data, err := client.ws.readMessage()
 //			if err == nil {
 //				client.onData(data)
 //			} else {
