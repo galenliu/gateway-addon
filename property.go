@@ -1,6 +1,7 @@
 package addon
 
 import (
+	json "github.com/json-iterator/go"
 	"github.com/xiam/to"
 	//json "github.com/json-iterator/go"
 )
@@ -85,12 +86,37 @@ func (prop *Property) onValueUpdate(funcs []ChangeFunc, newValue, oldValue inter
 	}
 }
 
-func (prop *Property) Update(new *Property) {
-	prop.Value = new.Value
-	prop.Name = new.Name
-	prop.Type = new.Type
-	prop.ReadOnly = new.ReadOnly
-	prop.Title = new.Title
+func (prop *Property) Update(js json.Any) {
+	title := js.Get("title").ToString()
+	prop.Title = title
+
+	atType := js.Get("@type").ToString()
+	prop.AtType = atType
+
+	r := js.Get("readOnly").ToBool()
+	prop.ReadOnly = r
+
+	name := js.Get("name").ToString()
+	prop.Name = name
+
+	value := js.Get("value").GetInterface()
+	prop.Value = value
+
+	deviceId := js.Get("deviceId").ToString()
+	prop.DeviceId = deviceId
+
+	unit := js.Get("unit").ToString()
+	prop.Unit = unit
+
+	minimum := js.Get("minimum").GetInterface()
+	if minimum != nil {
+		prop.Minimum = minimum
+	}
+
+	maximum := js.Get("maximum").GetInterface()
+	if maximum != nil {
+		prop.Maximum = maximum
+	}
 }
 
 func (prop *Property) convert(v interface{}) interface{} {
