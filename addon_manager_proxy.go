@@ -14,10 +14,37 @@ const (
 	Did = "deviceId"
 )
 
+type IProperty interface {
+	UpdateValue(value interface{})
+	GetDescription()string
+}
+
+type IDevice interface {
+	GetProperty(name string) IProperty
+	SetCredentials(username string, password string) error
+	SetPin(pin interface{}) error
+	GetDescription()string
+	GetID()string
+}
+
+type IAdapter interface {
+	//SendPairingPrompt(promt, url string, device *Device)
+	StartPairing(timeout float64)
+	CancelPairing()
+	GetID() string
+	GetName() string
+	Unload()
+	HandleDeviceSaved(device IDevice)
+	HandleDeviceRemoved(device IDevice)
+	GetDevice(deviceId string) IDevice
+}
+
 type AddonManagerProxy struct {
-	*AddonManager
-	ipcClient *IpcClient
-	adapters  map[string]*AdapterProxy
+	ipcClient   *IpcClient
+	adapters    map[string]IAdapter
+	packageName string
+	verbose     bool
+	running     bool
 }
 
 var once sync.Once
@@ -27,21 +54,20 @@ func NewAddonManagerProxy(packageName string) *AddonManagerProxy {
 	once.Do(
 		func() {
 			instance = &AddonManagerProxy{}
-			instance.AddonManager = NewAddonManager(packageName)
-			instance.adapters = make(map[string]*AdapterProxy, 10)
+			instance.packageName = packageName
+			instance.adapters = make(map[string]IAdapter, 10)
 			instance.ipcClient = NewClient(packageName, instance.onMessage)
-			instance.Run()
 		},
 	)
 	return instance
 }
 
-func (proxy *AddonManagerProxy) handleAdapterAdded(adapter *AdapterProxy) {
-	proxy.adapters[adapter.ID] = adapter
+func (proxy *AddonManagerProxy) handleAdapterAdded(adapter IAdapter) {
+	proxy.adapters[adapter.GetID()] = adapter
 	data := make(map[string]interface{})
-	data[Aid] = adapter.ID
-	data["name"] = adapter.Name
-	data["packageName"] = proxy.pluginId
+	data[Aid] = adapter.GetID()
+	data["name"] = adapter.GetName
+	data["packageName"] = proxy.packageName
 	proxy.send(AdapterAddedNotification, data)
 }
 
@@ -61,7 +87,7 @@ func (proxy *AddonManagerProxy) HandleDeviceRemoved(device *Device) {
 
 }
 
-func (proxy *AddonManagerProxy) getAdapter(adapterId string) (*AdapterProxy, error) {
+func (proxy *AddonManagerProxy) getAdapter(adapterId string) (IAdapter, error) {
 	adapter, ok := proxy.adapters[adapterId]
 	if !ok {
 		return nil, fmt.Errorf("adapter id(%s) invaild", adapterId)
@@ -97,53 +123,53 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 	//adapter pairing command
 	case AdapterStartPairingCommand:
 		timeout := json.Get(data, "data", "timeout").ToFloat64()
-		adapter.startPairing(timeout)
+		adapter.StartPairing(timeout)
 		return
 
 	case AdapterCancelPairingCommand:
-		go adapter.cancelPairing()
+		go adapter.CancelPairing()
 		return
 
 		//adapter unload request
 
 	case AdapterUnloadRequest:
 		adapter.Unload()
-		unloadFunc := func(proxy *AddonManagerProxy, adapter *AdapterProxy) {
+		unloadFunc := func(proxy *AddonManagerProxy, adapter IAdapter) {
 			data := make(map[string]interface{})
-			data[Aid] = adapter.ID
+			data[Aid] = adapter.GetID()
 			proxy.send(AdapterUnloadResponse, data)
 		}
 		go unloadFunc(proxy, adapter)
-		delete(proxy.adapters, adapter.ID)
+		delete(proxy.adapters, adapter.GetID())
 		break
 	}
 	var deviceId = json.Get(data, "data", "deviceId").ToString()
-	devx := adapter.getDeviceProxy(deviceId)
-	if devx == nil {
+	device := adapter.GetDevice(deviceId)
+	if device == nil {
 		return
 	}
 
 	switch messageType {
 	case AdapterCancelRemoveDeviceCommand:
 		adapter := proxy.adapters[adapterId]
-		log.Printf(adapter.ID)
+		log.Printf(adapter.GetID())
 
 	case DeviceSavedNotification:
 
-		adapter.handleDeviceSaved(deviceId, devx.Device)
+		adapter.HandleDeviceSaved(device)
 		return
 
 		//adapter remove devices request
 
 	case AdapterRemoveDeviceRequest:
-		adapter.HandleDeviceRemoved(devx)
+		adapter.HandleDeviceRemoved(device)
 
 		//devices set properties command
 
 	case DeviceSetPropertyCommand:
 		propName := json.Get(data, "data", "propertyName").ToString()
 		newValue := json.Get(data, "data", "propertyValue").GetInterface()
-		prop, err := devx.FindProperty(propName)
+		prop := device.GetProperty(propName)
 		if err != nil {
 			log.Fatal(err.Error())
 			return
@@ -157,9 +183,12 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 			log.Printf(e.Error())
 			return
 		}
-		proxy.sendPropertyChangedNotification(adapterId, prop)
+		data := make(map[string]interface{})
+		data[Aid] = adapterId
+		data[Did] = device.GetID()
+		data["property"] =  prop.GetDescription()
+		proxy.send(DevicePropertyChangedNotification,data,)
 
-		//devices pin
 
 	case DeviceSetPinRequest:
 		var pin PIN
@@ -174,9 +203,9 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 			data := make(map[string]interface{})
 			data[Aid] = adapterId
 			data[Did] = deviceId
-			data["devx"] = devx
+			data["devx"] = device
 			data["messageId"] = messageId
-			err := adapter.setPin(deviceId, pin)
+			err := device.SetPin(pin)
 			if err == nil {
 				data["success"] = true
 				proxy.send(DeviceSetPinResponse, data)
@@ -194,11 +223,10 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 		password := json.Get(data, "data", "password").ToString()
 
 		handleFunc := func() {
-			err := devx.SetCredentials(username, password)
+			err := device.SetCredentials(username, password)
 			data := make(map[string]interface{})
 			data[Aid] = adapterId
 			data[Did] = deviceId
-			data["devx"] = devx
 			data["messageId"] = messageId
 			if err != nil {
 				data["success"] = true
@@ -208,7 +236,6 @@ func (proxy *AddonManagerProxy) onMessage(data []byte) {
 			}
 			data["success"] = false
 			proxy.send(DeviceSetCredentialsResponse, data)
-			fmt.Printf(err.Error())
 			return
 		}
 		go handleFunc()
@@ -224,13 +251,7 @@ func (proxy *AddonManagerProxy) sendConnectedStateNotification(device *Device, c
 	proxy.send(DeviceConnectedStateNotification, data)
 }
 
-func (proxy *AddonManagerProxy) sendPropertyChangedNotification(adapterId string, p *Property) {
-	data := make(map[string]interface{})
-	data[Aid] = adapterId
-	data[Did] = p.DeviceId
-	data["property"] = p
-	proxy.send(DevicePropertyChangedNotification, data)
-}
+
 
 func (proxy *AddonManagerProxy) run() {
 	proxy.ipcClient.Register()
@@ -248,7 +269,7 @@ func (proxy *AddonManagerProxy) handleDeviceRemoved(adapterId, devId string) {
 }
 
 func (proxy *AddonManagerProxy) send(messageType int, data map[string]interface{}) {
-	data[Pid] = proxy.pluginId
+	data[Pid] = proxy.packageName
 	var message = struct {
 		MessageType int         `json:"messageType"`
 		Data        interface{} `json:"data"`
