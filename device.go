@@ -3,7 +3,6 @@ package addon
 import (
 	"fmt"
 	json "github.com/json-iterator/go"
-	//json "github.com/json-iterator/go"
 )
 
 const (
@@ -45,7 +44,8 @@ type Device struct {
 	Description         string   `json:"description,omitempty"`
 	CredentialsRequired bool     `json:"credentialsRequired"`
 
-	Properties map[string]*Property `json:"properties,omitempty"`
+	//Properties map[string]*Property `json:"properties,omitempty"`
+	Properties map[string]IProperty `json:"properties"`
 	Actions    map[string]*Action   `json:"actions,omitempty"`
 	Events     map[string]*Event    `json:"events,omitempty"`
 
@@ -53,6 +53,8 @@ type Device struct {
 	username  string
 	password  string
 	AdapterId string `json:"adapterId"`
+
+	adapter Owner
 }
 
 func NewDevice(id, title string) *Device {
@@ -61,7 +63,7 @@ func NewDevice(id, title string) *Device {
 	device.Title = title
 	device.AtType = make([]string, 0)
 	device.AtContext = make([]string, 0)
-	device.Properties = make(map[string]*Property, 5)
+	device.Properties = make(map[string]IProperty, 5)
 	device.Actions = make(map[string]*Action, 1)
 	return device
 }
@@ -82,12 +84,11 @@ func (device *Device) SetTitle(title string) {
 	device.Title = title
 }
 
-func (device *Device) AddProperty(prop *Property) {
+func (device *Device) AddProperty(prop IProperty) {
 	if device.Properties == nil {
-		device.Properties = make(map[string]*Property, 8)
+		device.Properties = make(map[string]IProperty, 8)
 	}
-	prop.DeviceId = device.ID
-	device.Properties[prop.Name] = prop
+	device.Properties[prop.GetName()] = prop
 }
 
 func (device *Device) AddAction(name string, a *Action) {
@@ -110,35 +111,17 @@ func (device *Device) AddTypes(types ...string) {
 	}
 }
 
-func (device *Device) GetProperty(propertyName string) *Property {
+func (device *Device) GetProperty(propertyName string) IProperty {
 	prop, ok := device.Properties[propertyName]
 	if !ok {
 		return nil
 	}
-	if prop.DeviceId == "" {
-		prop.DeviceId = device.ID
-	}
 	return prop
 }
 
-func (device *Device) FindProperty(propertyName string) (*Property, error) {
-	prop, ok := device.Properties[propertyName]
-	if !ok {
-		return nil, fmt.Errorf("can not found property(deivce:%s propertyName:%s)", device.ID, propertyName)
-	}
-	if prop.DeviceId == "" {
-		prop.DeviceId = device.ID
-	}
-	return prop, nil
-}
-
-func (device *Device) SetProperty(propertyName string, value interface{}) (interface{}, error) {
-	prop, ok := device.Properties[propertyName]
-	if !ok {
-		return nil, fmt.Errorf("properties(%s) not found", propertyName)
-	}
-	prop.UpdateValue(value)
-	return prop.Value, nil
+func (device *Device) Send(mt int, data map[string]interface{}) {
+	data[Did] = device.GetID()
+	device.adapter.Send(mt, data)
 }
 
 func (device *Device) GetID() string {
@@ -159,10 +142,18 @@ func (device *Device) SetPin(pin interface{}) error {
 	return nil
 }
 
-func (device *Device) ToJSON() string {
+func (device *Device) ToString() string {
 	data, err := json.MarshalIndent(device, "", " ")
 	if err != nil {
 		return string(data)
 	}
 	return ""
+}
+
+//func (device *Device) MarshalWebThing() ([]byte, error) {
+//
+//}
+
+func (device *Device) GetAdapterId() string {
+	return device.AdapterId
 }

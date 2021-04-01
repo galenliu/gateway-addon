@@ -13,8 +13,8 @@ func NewIntegerProperty(typ string) *IntegerProperty {
 }
 
 // SetValue sets a value
-func (prop *IntegerProperty) SetValue(value int) {
-	prop.UpdateValue(value)
+func (prop *IntegerProperty) SetCachedValueAndNotify(value int) {
+	prop.Property.SetCachedValueAndNotify(value)
 }
 
 // GetValue returns the value as bool

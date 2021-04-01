@@ -2,71 +2,141 @@ package addon
 
 import (
 	"fmt"
+	"log"
+	"sync"
 )
 
-type Manager interface {
-	HandleDeviceRemoved(device *Device)
-	HandleDeviceAdded(device *Device)
-}
+type onPairingFunc func(timeout float64)
+type OnCancelPairingFunc func()
+type OnDeviceSavedFunc func(deivceId string, device *Device)
+type OnSetCredentialsFunc func(deivceId, username, password string)
+type OnSetPinFunc func(deivceId string, pin PIN) error
 
 type Adapter struct {
-	ID          string `json:"adapterId"`
-	Name        string `json:"name"`
-	PackageName string `json:"packageName"`
-	manager     Manager
-	Devices     map[string]*Device
+	Devices     map[string]IDevice
+	manager     *AddonManager
+	locker      *sync.Mutex
+	cancelChan  chan struct{}
+	Id          string
+	name        string
+	packageName string
 	IsPairing   bool
+	verbose     bool
 }
 
-func NewAdapter(manager Manager, adapterId, name, packageName string) *Adapter {
+func NewAdapter(adapterId, adapterName string) *Adapter {
+
 	adapter := &Adapter{}
-	adapter.manager = manager
-	adapter.PackageName = packageName
-	adapter.Name = name
-	adapter.ID = adapterId
-	adapter.Devices = make(map[string]*Device, 10)
-	adapter.IsPairing = false
+	adapter.Id = adapterId
+	adapter.name = adapterName
+	adapter.locker = new(sync.Mutex)
+	adapter.Devices = make(map[string]IDevice)
+	adapter.cancelChan = make(chan struct{})
+	adapter.verbose = true
 	return adapter
 }
 
-func (adapter *Adapter) HandleDeviceAdded(device *Device) {
-	if device == nil {
-		return
+func (a *Adapter) HandleDeviceAdded(device IDevice) {
+	a.Devices[device.GetID()] = device
+	a.manager.handleDeviceAdded(device)
+}
+
+func (a *Adapter) SendError(message string) {
+	data := make(map[string]interface{})
+	data[Aid] = a.GetID()
+	data["message"] = message
+	a.manager.send(PluginErrorNotification, data)
+}
+
+func (a *Adapter) ConnectedNotify(device *Device, connected bool) {
+	a.manager.sendConnectedStateNotification(device, connected)
+}
+
+//向前端UI发送提示
+func (a *Adapter) SendPairingPrompt(prompt, url string, did string) {
+	data := make(map[string]interface{})
+	data[Aid] = a.GetID()
+	data["prompt"] = prompt
+	data[Did] = did
+	if url != "" {
+		data["url"] = url
 	}
-	device.AdapterId = adapter.ID
-	adapter.Devices[device.ID] = device
-	adapter.manager.HandleDeviceAdded(device)
+	a.manager.send(AdapterPairingPromptNotification, data)
 }
 
-func (adapter *Adapter) HandleDeviceRemoved(device *Device) {
-	delete(adapter.Devices, device.ID)
-	adapter.manager.HandleDeviceAdded(device)
-}
-
-func (adapter *Adapter) GetAdapterId() string {
-	return adapter.ID
-}
-
-func (adapter *Adapter) GetPacketName() string {
-	return adapter.PackageName
-}
-
-func (adapter *Adapter) GetManger() Manager {
-	return adapter.manager
-}
-
-func (adapter *Adapter) FindDevice(deviceId string) (*Device, error) {
-	device, ok := adapter.Devices[deviceId]
-	if !ok {
-		return nil, fmt.Errorf("devices id:(%s) invaild", deviceId)
+func (a *Adapter) SendUnpairingPrompt(prompt, url string, did string) {
+	data := make(map[string]interface{})
+	data[Aid] = a.GetID()
+	data["prompt"] = prompt
+	if did != "" {
+		data[Did] = did
 	}
-	return device, nil
+	if url != "" {
+		data["url"] = url
+	}
+	a.manager.send(AdapterUnpairingPromptNotification, data)
 }
 
-func (adapter *Adapter) GetDevice(deviceId string) *Device {
-	device, ok := adapter.Devices[deviceId]
-	if !ok {
-		return nil
+func (a *Adapter) StartPairing(timeout float64) {
+	if a.verbose {
+		log.Printf("adapter:(%s)- StartPairing() not implemented", a.GetID())
 	}
-	return device
+}
+
+func (a *Adapter) CancelPairing() {
+	if a.verbose {
+		log.Printf("adapter:(%s)- CancelPairing() not implemented", a.GetID())
+	}
+}
+
+func (a *Adapter) GetID() string {
+	return a.Id
+}
+
+func (a *Adapter) GetName() string {
+	if a.name == "" {
+		return a.Id
+	}
+	return a.name
+}
+
+func (a *Adapter) Unload() {
+	if a.verbose {
+		log.Printf("adapter:(%s)- unloaded ", a.GetID())
+	}
+}
+
+func (a *Adapter) HandleDeviceSaved(device IDevice) {
+	if a.verbose {
+		log.Printf("adapter:(%s)- HandleDeviceSaved() not implemented", a.GetID())
+	}
+}
+
+func (a *Adapter) HandleDeviceRemoved(device IDevice) {
+	delete(a.Devices, device.GetID())
+}
+
+func (a *Adapter) getDevice(id string) IDevice {
+	return a.Devices[id]
+}
+
+func (a *Adapter) close() {
+	fmt.Print("do some thing while a close")
+	a.manager.close()
+}
+
+func (a *Adapter) Running() bool {
+	return a.manager.running
+}
+
+func (a *Adapter) setManager(m *AddonManager) {
+	a.manager = m
+}
+
+func (a *Adapter) SetPin(deviceId string, pin interface{}) {
+
+}
+
+func (a *Adapter) SetCredentials(deviceId, username, password string) {
+
 }

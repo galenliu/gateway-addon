@@ -1,17 +1,23 @@
 package addon
 
 import (
+	"fmt"
 	json "github.com/json-iterator/go"
 	"github.com/xiam/to"
+	"log"
 	//json "github.com/json-iterator/go"
 )
 
 type ChangeFunc func(property *Property, newValue, oldValue interface{})
 type GetFunc func() interface{}
 
+type Owner interface {
+	Send(int, map[string]interface{})
+}
+
 type Property struct {
-	AtType      string      `json:"@type"` //引用的类型
-	Type        string      `json:"type"`  //数据的格式
+	AtType      string      `json:"@type"` //引用的类型(OnOffProperty ...)
+	Type        string      `json:"type"`  //数据的格式(string,boolean ...)
 	Title       string      `json:"title,omitempty"`
 	Description string      `json:"description,omitempty"`
 	Name        string      `json:"name"`
@@ -19,19 +25,25 @@ type Property struct {
 	Visible     bool        `json:"visible"`
 	Value       interface{} `json:"value"`
 
-	Unit      string      `json:"unit,omitempty"`
-	Minimum   interface{} `json:"minimum,omitempty"`
-	Maximum   interface{} `json:"maximum,omitempty"`
+	Unit       string      `json:"unit,omitempty"`
+	Minimum    interface{} `json:"minimum,omitempty"`
+	Maximum    interface{} `json:"maximum,omitempty"`
+	MultipleOf int         `json:"multipleOf,omitempty"`
+
 	StepValue interface{} `json:"stepValue,omitempty"`
 
-	Enum []string `json:"enum,omitempty"`
+	Enum []interface{} `json:"enum,omitempty"`
 
-	DeviceId string `json:"-"`
+	DeviceId string `json:"deviceId"`
+
+	device Owner
 
 	updateOnSameValue bool
 
 	valueChangeFuncs []ChangeFunc
 	valueGetFunc     GetFunc
+
+	verbose bool
 }
 
 func NewProperty(typ string) *Property {
@@ -39,6 +51,7 @@ func NewProperty(typ string) *Property {
 		AtType:           typ,
 		valueChangeFuncs: make([]ChangeFunc, 0),
 	}
+	prop.verbose = true
 	return prop
 }
 
@@ -59,6 +72,13 @@ func (prop *Property) getValue() interface{} {
 		prop.UpdateValue(prop.valueGetFunc())
 	}
 	return prop.Value
+}
+
+func (prop *Property) SetCachedValueAndNotify(value interface{}) {
+	prop.UpdateValue(value)
+	data := make(map[string]interface{})
+	data["property"] = prop.ToString()
+	prop.device.Send(DevicePropertyChangedNotification, data)
 }
 
 func (prop *Property) UpdateValue(value interface{}) {
@@ -84,38 +104,17 @@ func (prop *Property) onValueUpdate(funcs []ChangeFunc, newValue, oldValue inter
 	for _, fn := range funcs {
 		fn(prop, newValue, oldValue)
 	}
+
 }
 
-func (prop *Property) Update(js json.Any) {
-	title := js.Get("title").ToString()
-	prop.Title = title
-
-	atType := js.Get("@type").ToString()
-	prop.AtType = atType
-
-	r := js.Get("readOnly").ToBool()
-	prop.ReadOnly = r
-
-	name := js.Get("name").ToString()
-	prop.Name = name
-
-	value := js.Get("value").GetInterface()
-	prop.Value = value
-
-	deviceId := js.Get("deviceId").ToString()
-	prop.DeviceId = deviceId
-
-	unit := js.Get("unit").ToString()
-	prop.Unit = unit
-
-	minimum := js.Get("minimum").GetInterface()
-	if minimum != nil {
-		prop.Minimum = minimum
+func (prop *Property) Update(d []byte) {
+	title := json.Get(d, "title").ToString()
+	if title != "" && prop.Title != title {
+		prop.Title = title
 	}
-
-	maximum := js.Get("maximum").GetInterface()
-	if maximum != nil {
-		prop.Maximum = maximum
+	value := json.Get(d, "value").GetInterface()
+	if value != nil && prop.Value != value {
+		prop.Value = value
 	}
 }
 
@@ -152,4 +151,43 @@ func (prop *Property) clampInt(value int) interface{} {
 		value = min
 	}
 	return value
+}
+
+func (prop *Property) SetValue(newValue interface{}) {
+	if prop.verbose {
+		log.Printf("property(%s) set value not imp", prop.GetName())
+	}
+}
+
+func (prop *Property) GetName() string {
+	return prop.Name
+}
+
+func (prop *Property) SetName(name string) {
+	prop.Name = name
+}
+
+func (prop *Property) GetAtType() string {
+	return prop.AtType
+}
+
+func (prop *Property) GetType() string {
+	return prop.Type
+}
+
+//func (prop *Property) MarshalJSON() ([]byte, error) {
+//	return json.MarshalIndent(prop, "", " ")
+//}
+
+func (prop *Property) ToString() string {
+	str, err := json.MarshalToString(prop)
+	if err != nil {
+		fmt.Print(err.Error())
+		return ""
+	}
+	return str
+}
+
+func (prop *Property) SetOwner(owner Owner) {
+	prop.device = owner
 }

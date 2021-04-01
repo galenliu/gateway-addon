@@ -14,49 +14,67 @@ type LightHandler interface {
 }
 
 type LightBulb struct {
-	*addon.DeviceProxy
-	On     *properties.OnOffProperty
-	Bright *properties.BrightnessProperty
-	Color  *properties.ColorProperty
+	*addon.Device
+	On     addon.IProperty
+	Bright addon.IProperty
+	Color  addon.IProperty
 }
 
 func NewLightBulb(id, title string) *LightBulb {
 
 	lightBulb := &LightBulb{}
-	lightBulb.DeviceProxy = addon.NewDeviceProxy(id, title)
-	lightBulb.On = properties.NewOnOffProperty()
-	lightBulb.AddProperty(lightBulb.On.Property)
+	lightBulb.Device = addon.NewDevice(id, title)
+
 	lightBulb.AddTypes(addon.Light, addon.OnOffSwitch)
-	lightBulb.OnUpdataProertyValue = lightBulb.propertyValueUpdate
 	return lightBulb
 }
 
+func (light *LightBulb) AddProperty(p addon.IProperty) {
+	if p.GetAtType() == properties.TypeOnOffProperty {
+		light.On = p
+		light.Device.AddProperty(p)
+		return
+	}
+	if p.GetAtType() == properties.TypeBrightnessProperty {
+		light.Bright = p
+		light.Device.AddProperty(p)
+		return
+	}
+	if p.GetAtType() == properties.TypeColorProperty {
+
+		light.Color = p
+		light.Device.AddProperty(p)
+		return
+	}
+	light.Device.AddProperty(p)
+}
+
 func (light *LightBulb) TurnOn() {
-	light.On.SetValue(true)
+	//light.On.SetValue(true)
 }
 
 func (light *LightBulb) TurnOff() {
-	light.On.SetValue(false)
+	//light.On.SetValue(false)
 }
 
 func (light *LightBulb) Toggle() {
-	if light.On.Value == true {
-		light.TurnOff()
-	} else {
-		light.TurnOn()
-	}
+	//if light.On.Value == true {
+	//	light.TurnOff()
+	//} else {
+	//	light.TurnOn()
+	//}
 }
 
 func (light *LightBulb) SetBrightness(brightness int) {
-	if light.Bright == nil {
-		return
-	}
-	if brightness == 0 && light.On.Value == true {
-		light.TurnOff()
-	} else if brightness > 0 && light.On.Value == false {
-		light.TurnOn()
-	}
-	light.Bright.SetValue(brightness)
+	//if light.Bright == nil {
+	//	return
+	//}
+	//if brightness == 0 && light.On.Value == true {
+	//	light.TurnOff()
+	//} else if brightness > 0 && light.On.Value == false {
+	//	light.TurnOn()
+	//}
+	//light.Bright.SetValue(brightness)
 }
 
 func (light *LightBulb) propertyValueUpdate(propName string, newValue interface{}) {

@@ -24,7 +24,7 @@ const (
 	AlarmProperty              = "AlarmProperty"
 	BarometricPressureProperty = "BarometricPressureProperty"
 	//ColorProperty                    = "ColorProperty"
-	ColorTemperatureProperty         = "ColorTemperatureProperty"
+	//ColorTemperatureProperty         = "ColorTemperatureProperty"
 	ConcentrationProperty            = "ConcentrationProperty"
 	CurrentProperty                  = "CurrentProperty"
 	DensityProperty                  = "DensityProperty"

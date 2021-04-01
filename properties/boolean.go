@@ -13,7 +13,7 @@ func NewBooleanProperty(typ string) *BooleanProperty {
 }
 
 // SetValue sets a value
-func (prop *BooleanProperty) SetValue(value bool) {
+func (prop *BooleanProperty) SetBoolenValue(value bool) {
 	prop.UpdateValue(value)
 }
 

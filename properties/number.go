@@ -6,8 +6,8 @@ type NumberProperty struct {
 	*addon.Property
 }
 
-func NewNumberProperty(typ string) *NumberProperty {
-	number := addon.NewProperty(typ)
+func NewNumberProperty(typ, name string) *NumberProperty {
+	number := addon.NewProperty(typ, name)
 	number.Type = TypeNumber
 	return &NumberProperty{number}
 }
