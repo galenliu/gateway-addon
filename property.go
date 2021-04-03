@@ -191,3 +191,24 @@ func (prop *Property) ToString() string {
 func (prop *Property) SetOwner(owner Owner) {
 	prop.device = owner
 }
+
+type NotifyProp struct {
+	Name     string      `json:"name"`
+	Value    interface{} `json:"value"`
+	Title    string      `json:"title"`
+	Type     string      `json:"type"`
+	AtType   string      `json:"@type"`
+	DeviceId string      `json:"deviceId"`
+}
+
+func (prop *Property) GetNotifyDescription() []byte {
+	p := &NotifyProp{}
+	p.Name = prop.Name
+	p.Value = prop.Value
+	p.DeviceId = prop.DeviceId
+	p.Title = prop.Title
+	p.Type = prop.Type
+	p.AtType = prop.AtType
+	d, _ := json.Marshal(p)
+	return d
+}

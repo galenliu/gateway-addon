@@ -10,6 +10,8 @@ type Action struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	ActionFunc  Notification
+
+	DeviceId string `json:"deviceId"`
 }
 
 func NewAction() *Action {

@@ -23,6 +23,7 @@ type IProperty interface {
 	GetAtType() string
 	GetType() string
 	Update([]byte)
+	GetNotifyDescription() []byte
 
 	SetOwner(owner Owner)
 }
