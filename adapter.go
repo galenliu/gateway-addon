@@ -10,7 +10,7 @@ type onPairingFunc func(timeout float64)
 type OnCancelPairingFunc func()
 type OnDeviceSavedFunc func(deivceId string, device *Device)
 type OnSetCredentialsFunc func(deivceId, username, password string)
-type OnSetPinFunc func(deivceId string, pin PIN) error
+type OnSetPinFunc func(deiceId string, pin PIN) error
 
 type Adapter struct {
 	Devices     map[string]IDevice
