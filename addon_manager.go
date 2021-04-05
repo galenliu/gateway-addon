@@ -28,6 +28,12 @@ type IProperty interface {
 	SetOwner(owner Owner)
 }
 
+type IAction interface {
+}
+
+type IEvent interface {
+}
+
 type IDevice interface {
 	GetProperty(name string) IProperty
 	SetCredentials(username string, password string) error

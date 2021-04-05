@@ -1,8 +1,10 @@
 package addon
 
 import (
+	"addon/wot"
 	"fmt"
 	json "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 	"github.com/xiam/to"
 	"log"
 	//json "github.com/json-iterator/go"
@@ -16,41 +18,94 @@ type Owner interface {
 }
 
 type Property struct {
-	AtType      string      `json:"@type"` //引用的类型(OnOffProperty ...)
-	Type        string      `json:"type"`  //数据的格式(string,boolean ...)
-	Title       string      `json:"title,omitempty"`
-	Description string      `json:"description,omitempty"`
-	Name        string      `json:"name"`
-	ReadOnly    bool        `json:"readOnly"`
-	Visible     bool        `json:"visible"`
-	Value       interface{} `json:"value"`
+	*wot.DataSchema
+	Name       string        `json:"name"`
+	Value      interface{}   `json:"value"`
+	Unit       string        `json:"unit,omitempty"`
+	Minimum    interface{}   `json:"minimum,omitempty"`
+	Maximum    interface{}   `json:"maximum,omitempty"`
+	MultipleOf int           `json:"multipleOf,omitempty"`
+	Enum       []interface{} `json:"enum,omitempty"`
 
-	Unit       string      `json:"unit,omitempty"`
-	Minimum    interface{} `json:"minimum,omitempty"`
-	Maximum    interface{} `json:"maximum,omitempty"`
-	MultipleOf int         `json:"multipleOf,omitempty"`
+	Schema interface{}
 
-	StepValue interface{} `json:"stepValue,omitempty"`
+	DeviceId string `json:"deviceId,omitempty"`
 
-	Enum []interface{} `json:"enum,omitempty"`
-
-	DeviceId string `json:"deviceId"`
-
-	device Owner
-
+	device            Owner
 	updateOnSameValue bool
 
 	valueChangeFuncs []ChangeFunc
 	valueGetFunc     GetFunc
+	verbose          bool
+}
 
-	verbose bool
+func NewPropertyFromString(description string) *Property {
+	var prop Property
+	json.UnmarshalFromString(description, &prop)
+	if prop.Type == TypeNumber {
+		if gjson.Get(description, "minimum").Exists() || gjson.Get(description, "minimum").Exists() {
+			schema := wot.NumberSchema{}
+			if gjson.Get(description, "minimum").Exists() {
+				schema.Minimum = gjson.Get(description, "minimum").Float()
+			}
+			if gjson.Get(description, "maximum").Exists() {
+				schema.Minimum = gjson.Get(description, "maximum").Float()
+			}
+			if gjson.Get(description, "exclusiveMinimum").Exists() {
+				schema.ExclusiveMinimum = gjson.Get(description, "exclusiveMinimum").Float()
+			}
+			if gjson.Get(description, "exclusiveMaximum").Exists() {
+				schema.ExclusiveMaximum = gjson.Get(description, "exclusiveMaximum").Float()
+			}
+			if gjson.Get(description, "multipleOf").Exists() {
+				schema.MultipleOf = gjson.Get(description, "multipleOf").Float()
+			}
+			prop.Schema = schema
+
+		}
+	}
+	if prop.Type == TypeInteger {
+		if gjson.Get(description, "minimum").Exists() || gjson.Get(description, "minimum").Exists() {
+			schema := wot.IntegerSchema{}
+			if gjson.Get(description, "minimum").Exists() {
+				schema.Minimum = gjson.Get(description, "minimum").Int()
+			}
+			if gjson.Get(description, "maximum").Exists() {
+				schema.Minimum = gjson.Get(description, "maximum").Int()
+			}
+			if gjson.Get(description, "exclusiveMinimum").Exists() {
+				schema.ExclusiveMinimum = gjson.Get(description, "exclusiveMinimum").Int()
+			}
+			if gjson.Get(description, "exclusiveMaximum").Exists() {
+				schema.ExclusiveMaximum = gjson.Get(description, "exclusiveMaximum").Int()
+			}
+			if gjson.Get(description, "multipleOf").Exists() {
+				schema.MultipleOf = gjson.Get(description, "multipleOf").Int()
+			}
+			prop.Schema = schema
+
+		}
+	}
+	if prop.Type == TypeString {
+		if gjson.Get(description, "minLength").Exists() || gjson.Get(description, "maxLength").Exists() {
+			schema := wot.StringSchema{}
+			if gjson.Get(description, "minLength").Exists() {
+				schema.MinLength = gjson.Get(description, "minLength").Int()
+			}
+			if gjson.Get(description, "maximum").Exists() {
+				schema.MaxLength = gjson.Get(description, "maxLength").Int()
+			}
+			prop.Schema = schema
+		}
+	}
+	return &prop
 }
 
 func NewProperty(typ string) *Property {
 	prop := &Property{
-		AtType:           typ,
 		valueChangeFuncs: make([]ChangeFunc, 0),
 	}
+	prop.DataSchema.AtType = typ
 	prop.verbose = true
 	return prop
 }

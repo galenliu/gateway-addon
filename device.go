@@ -3,6 +3,7 @@ package addon
 import (
 	"fmt"
 	json "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 )
 
 const (
@@ -46,8 +47,8 @@ type Device struct {
 
 	//Properties map[string]*Property `json:"properties,omitempty"`
 	Properties map[string]IProperty `json:"properties"`
-	Actions    map[string]*Action   `json:"actions,omitempty"`
-	Events     map[string]*Event    `json:"events,omitempty"`
+	Actions    map[string]IAction   `json:"actions,omitempty"`
+	Events     map[string]IEvent    `json:"events,omitempty"`
 
 	Pin       PIN `json:"pin,omitempty"`
 	username  string
@@ -57,6 +58,78 @@ type Device struct {
 	adapter Owner
 }
 
+func NewDeivceFormString(data string) *Device {
+	device := Device{}
+	device.ID = gjson.Get(data, "id").String()
+	device.Title = gjson.Get(data, "title").String()
+
+	if gjson.Get(data, "@context").IsArray() {
+		for _, c := range gjson.Get(data, "@context").Array() {
+			device.AtContext = append(device.AtContext, c.String())
+		}
+	} else {
+		if gjson.Get(data, "@context").String() != "" {
+			device.AtContext = append(device.AtContext, gjson.Get(data, "@context").String())
+		}
+	}
+
+	if gjson.Get(data, "@type").IsArray() {
+		for _, c := range gjson.Get(data, "@type").Array() {
+			device.AtType = append(device.AtType, c.String())
+		}
+	} else {
+		if gjson.Get(data, "@type").String() != "" {
+			device.AtType = append(device.AtType, gjson.Get(data, "@type").String())
+		}
+	}
+	device.CredentialsRequired = gjson.Get(data, "credentialsRequired").Bool()
+
+	var pin PIN
+	if gjson.Get(data, "pin").Exists() {
+		pin.Pattern = gjson.Get(data, "pin.pattern").Value()
+		pin.Required = gjson.Get(data, "pin.required").Bool()
+		device.Pin = pin
+	}
+
+	properties := gjson.Get(data, "properties").Map()
+	if len(properties) > 1 {
+		device.Properties = make(map[string]IProperty)
+		for name, prop := range properties {
+			p := NewPropertyFromString(prop.String())
+			p.DeviceId = device.ID
+			if p != nil {
+				device.Properties[name] = p
+			}
+		}
+	}
+
+	actions := gjson.Get(data, "actions").Map()
+	if len(actions) > 1 {
+		device.Actions = make(map[string]IAction)
+		for name, a := range properties {
+			action := NewActionFromString(a.String())
+			action.DeviceId = device.ID
+			if action != nil {
+				device.Actions[name] = action
+			}
+		}
+	}
+
+	events := gjson.Get(data, "events").Map()
+	if len(events) > 1 {
+		device.Actions = make(map[string]IAction)
+		for name, e := range events {
+			event := NewActionFromString(e.String())
+			event.DeviceId = device.ID
+			if event != nil {
+				device.Events[name] = event
+			}
+		}
+	}
+
+	return &device
+}
+
 func NewDevice(id, title string) *Device {
 	device := &Device{}
 	device.ID = id
@@ -64,7 +137,8 @@ func NewDevice(id, title string) *Device {
 	device.AtType = make([]string, 0)
 	device.AtContext = make([]string, 0)
 	device.Properties = make(map[string]IProperty, 5)
-	device.Actions = make(map[string]*Action, 1)
+	device.Actions = make(map[string]IAction, 1)
+	device.Events = make(map[string]IEvent, 1)
 	return device
 }
 
@@ -91,17 +165,11 @@ func (device *Device) AddProperty(prop IProperty) {
 	device.Properties[prop.GetName()] = prop
 }
 
-func (device *Device) AddAction(name string, a *Action) {
-	if device.Actions == nil {
-		device.Actions = make(map[string]*Action, 5)
-	}
+func (device *Device) AddAction(name string, a IAction) {
 	device.Actions[name] = a
 }
 
-func (device *Device) AddEvent(name string, e *Event) {
-	if device.Events == nil {
-		device.Events = make(map[string]*Event, 8)
-	}
+func (device *Device) AddEvent(name string, e IEvent) {
 	device.Events[name] = e
 }
 
