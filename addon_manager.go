@@ -2,6 +2,7 @@ package addon
 
 import (
 	"fmt"
+
 	json "github.com/json-iterator/go"
 	"log"
 	"sync"
@@ -15,23 +16,24 @@ const (
 )
 
 type IProperty interface {
-	ToString() string
 	SetValue(interface{})
 	GetValue() interface{}
 	GetName() string
 	SetName(string)
 	GetAtType() string
 	GetType() string
-	Update([]byte)
-	GetNotifyDescription() []byte
+	DoPropertyChanged(string)
+	AsDict() Map
 
 	SetOwner(owner Owner)
 }
 
 type IAction interface {
+	AsDict() Map
 }
 
 type IEvent interface {
+	AsDict() Map
 }
 
 type IDevice interface {
@@ -41,7 +43,7 @@ type IDevice interface {
 	GetDescription() string
 	GetID() string
 	ToString() string
-
+	AsDict() Map
 	GetAdapterId() string
 }
 
@@ -218,7 +220,7 @@ func (m *AddonManager) onMessage(data []byte) {
 		data := make(map[string]interface{})
 		data[Aid] = adapterId
 		data[Did] = device.GetID()
-		data["property"] = prop.ToString()
+		data["property"] = prop.AsDict()
 		m.send(DevicePropertyChangedNotification, data)
 
 	case DeviceSetPinRequest:

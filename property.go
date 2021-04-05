@@ -7,7 +7,6 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/xiam/to"
 	"log"
-	//json "github.com/json-iterator/go"
 )
 
 type ChangeFunc func(property *Property, newValue, oldValue interface{})
@@ -27,9 +26,9 @@ type Property struct {
 	MultipleOf int           `json:"multipleOf,omitempty"`
 	Enum       []interface{} `json:"enum,omitempty"`
 
-	Schema interface{}
-
 	DeviceId string `json:"deviceId,omitempty"`
+
+	replyChan chan Map
 
 	device            Owner
 	updateOnSameValue bool
@@ -41,6 +40,7 @@ type Property struct {
 
 func NewPropertyFromString(description string) *Property {
 	var prop Property
+	prop.replyChan = make(chan Map)
 	json.UnmarshalFromString(description, &prop)
 	if prop.Type == TypeNumber {
 		if gjson.Get(description, "minimum").Exists() || gjson.Get(description, "minimum").Exists() {
@@ -110,71 +110,77 @@ func NewProperty(typ string) *Property {
 	return prop
 }
 
-func (prop *Property) OnValueUpdate(fn ChangeFunc) {
-	prop.valueChangeFuncs = append(prop.valueChangeFuncs, fn)
+func (p *Property) OnValueUpdate(fn ChangeFunc) {
+	p.valueChangeFuncs = append(p.valueChangeFuncs, fn)
 }
 
-func (prop *Property) OnValueGet(fn GetFunc) {
-	prop.valueGetFunc = fn
+func (p *Property) OnValueGet(fn GetFunc) {
+	p.valueGetFunc = fn
 }
 
-func (prop *Property) GetValue() interface{} {
-	return prop.getValue()
+func (p *Property) GetValue() interface{} {
+	return p.getValue()
 }
 
-func (prop *Property) getValue() interface{} {
-	if prop.valueGetFunc != nil {
-		prop.UpdateValue(prop.valueGetFunc())
+func (p *Property) getValue() interface{} {
+	if p.valueGetFunc != nil {
+		p.UpdateValue(p.valueGetFunc())
 	}
-	return prop.Value
+	return p.Value
 }
 
-func (prop *Property) SetCachedValueAndNotify(value interface{}) {
-	prop.UpdateValue(value)
+func (p *Property) SetCachedValueAndNotify(value interface{}) {
+	p.UpdateValue(value)
 	data := make(map[string]interface{})
-	data["property"] = prop.ToString()
-	prop.device.Send(DevicePropertyChangedNotification, data)
+	data["property"] = p.ToString()
+	p.device.Send(DevicePropertyChangedNotification, data)
 }
 
-func (prop *Property) UpdateValue(value interface{}) {
-	value = prop.convert(value)
-	switch prop.Type {
+func (p *Property) UpdateValue(value interface{}) {
+	value = p.convert(value)
+	switch p.Type {
 	case TypeNumber:
-		value = prop.clampFloat(value.(float64))
+		value = p.clampFloat(value.(float64))
 	case TypeInteger:
-		value = prop.clampInt(value.(int))
+		value = p.clampInt(value.(int))
 	}
-	if prop.Value == value && !prop.updateOnSameValue {
+	if p.Value == value && !p.updateOnSameValue {
 		return
 	}
-	if prop.ReadOnly {
+	if p.ReadOnly {
 		return
 	}
-	oldValue := prop.Value
-	prop.Value = value
-	prop.onValueUpdate(prop.valueChangeFuncs, value, oldValue)
+	oldValue := p.Value
+	p.Value = value
+	p.onValueUpdate(p.valueChangeFuncs, value, oldValue)
 }
 
-func (prop *Property) onValueUpdate(funcs []ChangeFunc, newValue, oldValue interface{}) {
+func (p *Property) onValueUpdate(funcs []ChangeFunc, newValue, oldValue interface{}) {
 	for _, fn := range funcs {
-		fn(prop, newValue, oldValue)
+		fn(p, newValue, oldValue)
 	}
 
 }
 
-func (prop *Property) Update(d []byte) {
-	title := json.Get(d, "title").ToString()
-	if title != "" && prop.Title != title {
-		prop.Title = title
+func (p *Property) DoPropertyChanged(d string) {
+	title := gjson.Get(d, "title").String()
+	if title != "" && p.Title != title {
+		p.Title = title
 	}
-	value := json.Get(d, "value").GetInterface()
-	if value != nil && prop.Value != value {
-		prop.Value = value
+	value := gjson.Get(d, "value").Value()
+	if value != nil && p.Value != value {
+		p.Value = value
+	}
+	select {
+	case p.replyChan <- p.AsDict():
+		return
+	default:
+		return
 	}
 }
 
-func (prop *Property) convert(v interface{}) interface{} {
-	switch prop.Type {
+func (p *Property) convert(v interface{}) interface{} {
+	switch p.Type {
 	case TypeNumber:
 		return to.Float64(v)
 	case TypeInteger:
@@ -186,9 +192,9 @@ func (prop *Property) convert(v interface{}) interface{} {
 	}
 }
 
-func (prop *Property) clampFloat(value float64) interface{} {
-	min, minOK := prop.Minimum.(float64)
-	max, maxOK := prop.Maximum.(float64)
+func (p *Property) clampFloat(value float64) interface{} {
+	min, minOK := p.Minimum.(float64)
+	max, maxOK := p.Maximum.(float64)
 	if maxOK == true && value > max {
 		value = max
 	} else if minOK == true && value < min {
@@ -197,9 +203,9 @@ func (prop *Property) clampFloat(value float64) interface{} {
 	return value
 }
 
-func (prop *Property) clampInt(value int) interface{} {
-	min, minOK := prop.Minimum.(int)
-	max, maxOK := prop.Maximum.(int)
+func (p *Property) clampInt(value int) interface{} {
+	min, minOK := p.Minimum.(int)
+	max, maxOK := p.Maximum.(int)
 	if maxOK == true && value > max {
 		value = max
 	} else if minOK == true && value < min {
@@ -208,34 +214,34 @@ func (prop *Property) clampInt(value int) interface{} {
 	return value
 }
 
-func (prop *Property) SetValue(newValue interface{}) {
-	if prop.verbose {
-		log.Printf("property(%s) set value not imp", prop.GetName())
+func (p *Property) SetValue(newValue interface{}) {
+	if p.verbose {
+		log.Printf("property(%s) set value not imp", p.GetName())
 	}
 }
 
-func (prop *Property) GetName() string {
-	return prop.Name
+func (p *Property) GetName() string {
+	return p.Name
 }
 
-func (prop *Property) SetName(name string) {
-	prop.Name = name
+func (p *Property) SetName(name string) {
+	p.Name = name
 }
 
-func (prop *Property) GetAtType() string {
-	return prop.AtType
+func (p *Property) GetAtType() string {
+	return p.AtType
 }
 
-func (prop *Property) GetType() string {
-	return prop.Type
+func (p *Property) GetType() string {
+	return p.Type
 }
 
 //func (prop *Property) MarshalJSON() ([]byte, error) {
 //	return json.MarshalIndent(prop, "", " ")
 //}
 
-func (prop *Property) ToString() string {
-	str, err := json.MarshalToString(prop)
+func (p *Property) ToString() string {
+	str, err := json.MarshalToString(p)
 	if err != nil {
 		fmt.Print(err.Error())
 		return ""
@@ -243,27 +249,25 @@ func (prop *Property) ToString() string {
 	return str
 }
 
-func (prop *Property) SetOwner(owner Owner) {
-	prop.device = owner
+func (p *Property) SetOwner(owner Owner) {
+	p.device = owner
 }
 
-type NotifyProp struct {
-	Name     string      `json:"name"`
-	Value    interface{} `json:"value"`
-	Title    string      `json:"title"`
-	Type     string      `json:"type"`
-	AtType   string      `json:"@type"`
-	DeviceId string      `json:"deviceId"`
-}
-
-func (prop *Property) GetNotifyDescription() []byte {
-	p := &NotifyProp{}
-	p.Name = prop.Name
-	p.Value = prop.Value
-	p.DeviceId = prop.DeviceId
-	p.Title = prop.Title
-	p.Type = prop.Type
-	p.AtType = prop.AtType
-	d, _ := json.Marshal(p)
-	return d
+func (p *Property) AsDict() Map {
+	return Map{
+		"name":        p.Name,
+		"value":       p.Value,
+		"title":       p.Title,
+		"type":        p.Type,
+		"@type":       p.AtType,
+		"unit":        p.Unit,
+		"description": p.Description,
+		"minimum":     p.Minimum,
+		"maximum":     p.Maximum,
+		"enum":        p.Enum,
+		"readOnly":    p.ReadOnly,
+		"multipleOf":  p.MultipleOf,
+		"forms":       p.Forms,
+		"deviceId":    p.DeviceId,
+	}
 }

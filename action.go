@@ -26,3 +26,10 @@ func NewAction() *Action {
 	action := &Action{}
 	return action
 }
+
+func (a *Action) AsDict() Map {
+	return Map{
+		"name": a.Name,
+	}
+
+}

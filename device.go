@@ -1,6 +1,7 @@
 package addon
 
 import (
+	"addon/wot"
 	"fmt"
 	json "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
@@ -39,6 +40,7 @@ type PIN struct {
 
 type Device struct {
 	ID                  string   `json:"id"`
+	Name                string   `json:"name"`
 	AtContext           []string `json:"@context,omitempty"`
 	Title               string   `json:"title,required"`
 	AtType              []string `json:"@type"`
@@ -54,6 +56,8 @@ type Device struct {
 	username  string
 	password  string
 	AdapterId string `json:"adapterId"`
+
+	Forms []wot.Form `json:"forms"`
 
 	adapter Owner
 }
@@ -218,9 +222,46 @@ func (device *Device) ToString() string {
 	return ""
 }
 
-//func (device *Device) MarshalWebThing() ([]byte, error) {
-//
-//}
+func (device *Device) AsDict() Map {
+	m := Map{
+		"id":                  device.ID,
+		"title":               device.Title,
+		"@context":            device.AtContext,
+		"@type":               device.AtType,
+		"description":         device.Description,
+		"forms":               device.Forms,
+		"pin":                 device.Pin,
+		"credentialsRequired": device.CredentialsRequired,
+		"properties":          device.mapPropertiesToDict(),
+		"events":              device.mapEventsDictFromFunction(),
+		"actions":             device.mapActionsDictFromFunction(),
+	}
+	return m
+}
+
+func (device *Device) mapPropertiesToDict() Map {
+	m := make(Map)
+	for name, p := range device.Properties {
+		m[name] = p.AsDict()
+	}
+	return m
+}
+
+func (device *Device) mapActionsDictFromFunction() Map {
+	m := make(Map)
+	for name, a := range device.Actions {
+		m[name] = a.AsDict()
+	}
+	return m
+}
+
+func (device *Device) mapEventsDictFromFunction() Map {
+	m := make(Map)
+	for name, a := range device.Events {
+		m[name] = a.AsDict()
+	}
+	return m
+}
 
 func (device *Device) GetAdapterId() string {
 	return device.AdapterId

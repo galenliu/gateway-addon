@@ -27,6 +27,8 @@ type DataSchema struct {
 	Format           string `json:"format,omitempty"`
 	ContentEncoding  string `json:"contentEncoding,,omitempty"`
 	ContentMediaType string `json:"contentMediaType,,omitempty"`
+
+	Schema interface{} `json:"schema"`
 }
 
 type ArraySchema struct {
