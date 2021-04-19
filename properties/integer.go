@@ -7,9 +7,9 @@ type IntegerProperty struct {
 }
 
 func NewIntegerProperty(typ string) *IntegerProperty {
-	integer := addon.NewProperty(typ)
-	integer.Type = TypeInteger
-	return &IntegerProperty{integer}
+	p := addon.NewProperty(typ)
+	p.SetType(TypeInteger)
+	return &IntegerProperty{p}
 }
 
 // SetValue sets a value
@@ -40,8 +40,4 @@ func (prop *IntegerProperty) SetMinValue(value int) {
 
 func (prop *IntegerProperty) SetMaxValue(value int) {
 	prop.Maximum = value
-}
-
-func (prop *IntegerProperty) SetStepValue(value int) {
-	prop.StepValue = value
 }

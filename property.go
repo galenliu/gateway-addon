@@ -17,7 +17,13 @@ type Owner interface {
 }
 
 type Property struct {
-	*wot.DataSchema
+	*wot.PropertyAffordance
+
+	//解决 PropertyAffordance中，未明确指定问题
+	Title       string `json:"title"`
+	AtType      string `json:"@type"`
+	Description string `json:"description"`
+
 	Name       string        `json:"name"`
 	Value      interface{}   `json:"value"`
 	Unit       string        `json:"unit,omitempty"`
@@ -41,8 +47,11 @@ type Property struct {
 func NewPropertyFromString(description string) *Property {
 	var prop Property
 	prop.replyChan = make(chan Map)
-	json.UnmarshalFromString(description, &prop)
-	if prop.Type == TypeNumber {
+	err := json.UnmarshalFromString(description, &prop)
+	if err != nil {
+		return nil
+	}
+	if prop.GetType() == TypeNumber {
 		if gjson.Get(description, "minimum").Exists() || gjson.Get(description, "minimum").Exists() {
 			schema := wot.NumberSchema{}
 			if gjson.Get(description, "minimum").Exists() {
@@ -60,11 +69,10 @@ func NewPropertyFromString(description string) *Property {
 			if gjson.Get(description, "multipleOf").Exists() {
 				schema.MultipleOf = gjson.Get(description, "multipleOf").Float()
 			}
-			prop.Schema = schema
 
 		}
 	}
-	if prop.Type == TypeInteger {
+	if prop.GetType() == TypeInteger {
 		if gjson.Get(description, "minimum").Exists() || gjson.Get(description, "minimum").Exists() {
 			schema := wot.IntegerSchema{}
 			if gjson.Get(description, "minimum").Exists() {
@@ -82,11 +90,10 @@ func NewPropertyFromString(description string) *Property {
 			if gjson.Get(description, "multipleOf").Exists() {
 				schema.MultipleOf = gjson.Get(description, "multipleOf").Int()
 			}
-			prop.Schema = schema
 
 		}
 	}
-	if prop.Type == TypeString {
+	if prop.GetType() == TypeString {
 		if gjson.Get(description, "minLength").Exists() || gjson.Get(description, "maxLength").Exists() {
 			schema := wot.StringSchema{}
 			if gjson.Get(description, "minLength").Exists() {
@@ -95,7 +102,7 @@ func NewPropertyFromString(description string) *Property {
 			if gjson.Get(description, "maximum").Exists() {
 				schema.MaxLength = gjson.Get(description, "maxLength").Int()
 			}
-			prop.Schema = schema
+
 		}
 	}
 	return &prop
@@ -105,7 +112,7 @@ func NewProperty(typ string) *Property {
 	prop := &Property{
 		valueChangeFuncs: make([]ChangeFunc, 0),
 	}
-	prop.DataSchema.AtType = typ
+	prop.SetAtType(typ)
 	prop.verbose = true
 	return prop
 }
@@ -138,7 +145,7 @@ func (p *Property) SetCachedValueAndNotify(value interface{}) {
 
 func (p *Property) UpdateValue(value interface{}) {
 	value = p.convert(value)
-	switch p.Type {
+	switch p.GetType() {
 	case TypeNumber:
 		value = p.clampFloat(value.(float64))
 	case TypeInteger:
@@ -147,7 +154,7 @@ func (p *Property) UpdateValue(value interface{}) {
 	if p.Value == value && !p.updateOnSameValue {
 		return
 	}
-	if p.ReadOnly {
+	if p.IsReadOnly() {
 		return
 	}
 	oldValue := p.Value
@@ -180,7 +187,7 @@ func (p *Property) DoPropertyChanged(d string) {
 }
 
 func (p *Property) convert(v interface{}) interface{} {
-	switch p.Type {
+	switch p.GetType() {
 	case TypeNumber:
 		return to.Float64(v)
 	case TypeInteger:
@@ -232,10 +239,6 @@ func (p *Property) GetAtType() string {
 	return p.AtType
 }
 
-func (p *Property) GetType() string {
-	return p.Type
-}
-
 //func (prop *Property) MarshalJSON() ([]byte, error) {
 //	return json.MarshalIndent(prop, "", " ")
 //}
@@ -258,14 +261,14 @@ func (p *Property) AsDict() Map {
 		"name":        p.Name,
 		"value":       p.Value,
 		"title":       p.Title,
-		"type":        p.Type,
+		"type":        p.GetType(),
 		"@type":       p.AtType,
 		"unit":        p.Unit,
 		"description": p.Description,
 		"minimum":     p.Minimum,
 		"maximum":     p.Maximum,
 		"enum":        p.Enum,
-		"readOnly":    p.ReadOnly,
+		"readOnly":    p.IsReadOnly(),
 		"multipleOf":  p.MultipleOf,
 		"forms":       p.Forms,
 		"deviceId":    p.DeviceId,

@@ -1,12 +1,8 @@
 package wot
 
-type Event struct {
-	Name         string      `json:"name"`
+type EventAffordance struct {
+	*InteractionAffordance
 	Subscription *DataSchema `json:"subscription,omitempty"`
 	Data         *DataSchema `json:"data,omitempty"`
 	Cancellation *DataSchema `json:"cancellation,omitempty"`
-}
-
-func (event *Event) GetEvent() *Event {
-	return event
 }

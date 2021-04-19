@@ -1,18 +1,5 @@
 package wot
 
-type Form map[string]string
-
-func NewForm(args ...string) Form {
-	m := make(map[string]string, 0)
-	for i, _ := range args {
-		if i%2 == 0 {
-			continue
-		}
-		m[args[i-1]] = args[i]
-	}
-	return m
-}
-
 type InteractionAffordance struct {
 	AtType       string `json:"@type"`
 	Title        string `json:"title,omitempty"`

@@ -7,9 +7,9 @@ type StringProperty struct {
 }
 
 func NewStringProperty(typ string) *StringProperty {
-	property := addon.NewProperty(typ)
-	property.Type = TypeString
-	return &StringProperty{property}
+	p := addon.NewProperty(typ)
+	p.SetType(TypeString)
+	return &StringProperty{p}
 }
 
 // SetValue sets a value

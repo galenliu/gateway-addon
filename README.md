@@ -12,6 +12,4 @@ MessageTypeDeviceSavedNotification
 
 MessageTypeAdapterRemoveDeviceRequest
 
-
-设置属性
-MessageTypeDeviceSetPropertyCommand
+设置属性 MessageTypeDeviceSetPropertyCommand
