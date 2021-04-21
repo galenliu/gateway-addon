@@ -1,8 +1,8 @@
 package addon
 
 import (
-	"addon/wot"
 	"fmt"
+	"github.com/galenliu/gateway-addon/wot"
 	json "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/xiam/to"
@@ -20,17 +20,12 @@ type Property struct {
 	*wot.PropertyAffordance
 
 	//解决 PropertyAffordance中，未明确指定问题
-	Title       string `json:"title"`
-	AtType      string `json:"@type"`
-	Description string `json:"description"`
+	//Title       string `json:"title"`
+	//AtType      string `json:"@type"`
+	//Description string `json:"description,omitempty"`
 
-	Name       string        `json:"name"`
-	Value      interface{}   `json:"value"`
-	Unit       string        `json:"unit,omitempty"`
-	Minimum    interface{}   `json:"minimum,omitempty"`
-	Maximum    interface{}   `json:"maximum,omitempty"`
-	MultipleOf int           `json:"multipleOf,omitempty"`
-	Enum       []interface{} `json:"enum,omitempty"`
+	Name  string      `json:"name"`
+	Value interface{} `json:"value,omitempty"`
 
 	DeviceId string `json:"deviceId,omitempty"`
 
@@ -46,65 +41,122 @@ type Property struct {
 
 func NewPropertyFromString(description string) *Property {
 	var prop Property
-	prop.replyChan = make(chan Map)
-	err := json.UnmarshalFromString(description, &prop)
-	if err != nil {
+
+	//err := json.UnmarshalFromString(description, &prop)
+	//if err != nil {
+	//	return nil
+	//}
+	//if prop.GetType() == TypeNumber {
+	//	if gjson.Get(description, "minimum").Exists() || gjson.Get(description, "minimum").Exists() {
+	//		schema := wot.NumberSchema{}
+	//		if gjson.Get(description, "minimum").Exists() {
+	//			schema.Minimum = gjson.Get(description, "minimum").Float()
+	//		}
+	//		if gjson.Get(description, "maximum").Exists() {
+	//			schema.Minimum = gjson.Get(description, "maximum").Float()
+	//		}
+	//		if gjson.Get(description, "exclusiveMinimum").Exists() {
+	//			schema.ExclusiveMinimum = gjson.Get(description, "exclusiveMinimum").Float()
+	//		}
+	//		if gjson.Get(description, "exclusiveMaximum").Exists() {
+	//			schema.ExclusiveMaximum = gjson.Get(description, "exclusiveMaximum").Float()
+	//		}
+	//		if gjson.Get(description, "multipleOf").Exists() {
+	//			schema.MultipleOf = gjson.Get(description, "multipleOf").Float()
+	//		}
+	//
+	//	}
+	//}
+	//if prop.GetType() == TypeInteger {
+	//	if gjson.Get(description, "minimum").Exists() || gjson.Get(description, "minimum").Exists() {
+	//		schema := wot.IntegerSchema{}
+	//		if gjson.Get(description, "minimum").Exists() {
+	//			schema.Minimum = gjson.Get(description, "minimum").Int()
+	//		}
+	//		if gjson.Get(description, "maximum").Exists() {
+	//			schema.Minimum = gjson.Get(description, "maximum").Int()
+	//		}
+	//		if gjson.Get(description, "exclusiveMinimum").Exists() {
+	//			schema.ExclusiveMinimum = gjson.Get(description, "exclusiveMinimum").Int()
+	//		}
+	//		if gjson.Get(description, "exclusiveMaximum").Exists() {
+	//			schema.ExclusiveMaximum = gjson.Get(description, "exclusiveMaximum").Int()
+	//		}
+	//		if gjson.Get(description, "multipleOf").Exists() {
+	//			schema.MultipleOf = gjson.Get(description, "multipleOf").Int()
+	//		}
+	//
+	//	}
+	//}
+	//if prop.GetType() == TypeString {
+	//	if gjson.Get(description, "minLength").Exists() || gjson.Get(description, "maxLength").Exists() {
+	//		schema := wot.StringSchema{}
+	//		if gjson.Get(description, "minLength").Exists() {
+	//			schema.MinLength = gjson.Get(description, "minLength").Int()
+	//		}
+	//		if gjson.Get(description, "maximum").Exists() {
+	//			schema.MaxLength = gjson.Get(description, "maxLength").Int()
+	//		}
+	//
+	//	}
+	//}
+	//
+	e1 := json.UnmarshalFromString(description, &prop)
+	if e1 != nil {
 		return nil
 	}
-	if prop.GetType() == TypeNumber {
-		if gjson.Get(description, "minimum").Exists() || gjson.Get(description, "minimum").Exists() {
-			schema := wot.NumberSchema{}
-			if gjson.Get(description, "minimum").Exists() {
-				schema.Minimum = gjson.Get(description, "minimum").Float()
-			}
-			if gjson.Get(description, "maximum").Exists() {
-				schema.Minimum = gjson.Get(description, "maximum").Float()
-			}
-			if gjson.Get(description, "exclusiveMinimum").Exists() {
-				schema.ExclusiveMinimum = gjson.Get(description, "exclusiveMinimum").Float()
-			}
-			if gjson.Get(description, "exclusiveMaximum").Exists() {
-				schema.ExclusiveMaximum = gjson.Get(description, "exclusiveMaximum").Float()
-			}
-			if gjson.Get(description, "multipleOf").Exists() {
-				schema.MultipleOf = gjson.Get(description, "multipleOf").Float()
-			}
+	typ := json.Get([]byte(description), "type").ToString()
+	switch typ {
+	case "array":
+		var p wot.ArraySchema
+		err := json.Unmarshal([]byte(description), &p)
+		if err == nil {
+			prop.IDataSchema = p
+		}
+	case "boolean":
+		var p wot.BooleanSchema
+		err := json.Unmarshal([]byte(description), &p)
+		if err == nil {
+			prop.IDataSchema = p
+		}
 
+	case "number":
+		var p wot.NumberSchema
+		err := json.Unmarshal([]byte(description), &p)
+		if err == nil {
+			prop.IDataSchema = p
+		}
+
+	case "integer":
+		var p wot.IntegerSchema
+		err := json.Unmarshal([]byte(description), &p)
+		if err == nil {
+			prop.IDataSchema = p
+		}
+
+	case "object":
+		var p wot.ObjectSchema
+		err := json.Unmarshal([]byte(description), &p)
+		if err == nil {
+			prop.IDataSchema = p
+		}
+
+	case "string":
+		var p wot.StringSchema
+		err := json.Unmarshal([]byte(description), &p)
+		if err == nil {
+			prop.IDataSchema = p
+		}
+
+	case "null":
+		var p wot.NullSchema
+		err := json.Unmarshal([]byte(description), &p)
+		if err == nil {
+			prop.IDataSchema = p
 		}
 	}
-	if prop.GetType() == TypeInteger {
-		if gjson.Get(description, "minimum").Exists() || gjson.Get(description, "minimum").Exists() {
-			schema := wot.IntegerSchema{}
-			if gjson.Get(description, "minimum").Exists() {
-				schema.Minimum = gjson.Get(description, "minimum").Int()
-			}
-			if gjson.Get(description, "maximum").Exists() {
-				schema.Minimum = gjson.Get(description, "maximum").Int()
-			}
-			if gjson.Get(description, "exclusiveMinimum").Exists() {
-				schema.ExclusiveMinimum = gjson.Get(description, "exclusiveMinimum").Int()
-			}
-			if gjson.Get(description, "exclusiveMaximum").Exists() {
-				schema.ExclusiveMaximum = gjson.Get(description, "exclusiveMaximum").Int()
-			}
-			if gjson.Get(description, "multipleOf").Exists() {
-				schema.MultipleOf = gjson.Get(description, "multipleOf").Int()
-			}
 
-		}
-	}
-	if prop.GetType() == TypeString {
-		if gjson.Get(description, "minLength").Exists() || gjson.Get(description, "maxLength").Exists() {
-			schema := wot.StringSchema{}
-			if gjson.Get(description, "minLength").Exists() {
-				schema.MinLength = gjson.Get(description, "minLength").Int()
-			}
-			if gjson.Get(description, "maximum").Exists() {
-				schema.MaxLength = gjson.Get(description, "maxLength").Int()
-			}
-
-		}
-	}
+	prop.replyChan = make(chan Map)
 	return &prop
 }
 
@@ -149,7 +201,7 @@ func (p *Property) UpdateValue(value interface{}) {
 	case TypeNumber:
 		value = p.clampFloat(value.(float64))
 	case TypeInteger:
-		value = p.clampInt(value.(int))
+		value = p.clampInt(int64(value.(int)))
 	}
 	if p.Value == value && !p.updateOnSameValue {
 		return
@@ -199,26 +251,14 @@ func (p *Property) convert(v interface{}) interface{} {
 	}
 }
 
-func (p *Property) clampFloat(value float64) interface{} {
-	min, minOK := p.Minimum.(float64)
-	max, maxOK := p.Maximum.(float64)
-	if maxOK == true && value > max {
-		value = max
-	} else if minOK == true && value < min {
-		value = min
-	}
-	return value
+func (p *Property) clampFloat(value float64) float64 {
+	prop := p.IDataSchema.(*wot.NumberSchema)
+	return prop.ClampFloat(value)
 }
 
-func (p *Property) clampInt(value int) interface{} {
-	min, minOK := p.Minimum.(int)
-	max, maxOK := p.Maximum.(int)
-	if maxOK == true && value > max {
-		value = max
-	} else if minOK == true && value < min {
-		value = min
-	}
-	return value
+func (p *Property) clampInt(value int64) int64 {
+	prop := p.IDataSchema.(*wot.IntegerSchema)
+	return prop.ClampInt(value)
 }
 
 func (p *Property) SetValue(newValue interface{}) {
@@ -263,13 +303,8 @@ func (p *Property) AsDict() Map {
 		"title":       p.Title,
 		"type":        p.GetType(),
 		"@type":       p.AtType,
-		"unit":        p.Unit,
 		"description": p.Description,
-		"minimum":     p.Minimum,
-		"maximum":     p.Maximum,
-		"enum":        p.Enum,
 		"readOnly":    p.IsReadOnly(),
-		"multipleOf":  p.MultipleOf,
 		"forms":       p.Forms,
 		"deviceId":    p.DeviceId,
 	}

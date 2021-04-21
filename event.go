@@ -1,6 +1,6 @@
 package addon
 
-import "addon/wot"
+import "github.com/galenliu/gateway-addon/wot"
 
 //import json "github.com/json-iterator/go"
 

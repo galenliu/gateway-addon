@@ -2,7 +2,6 @@ package addon
 
 import (
 	"fmt"
-
 	json "github.com/json-iterator/go"
 	"log"
 	"sync"

@@ -1,13 +1,9 @@
 package addon
 
-import (
-	"addon/wot"
-)
-
-type Notification func(action *Action)
+import "github.com/galenliu/gateway-addon/wot"
 
 type Action struct {
-	*wot.InteractionAffordance
+	*wot.ActionAffordance
 	Name string `json:"name"`
 
 	Input      *wot.DataSchema `json:"input,omitempty"`
@@ -31,5 +27,4 @@ func (a *Action) AsDict() Map {
 	return Map{
 		"name": a.Name,
 	}
-
 }

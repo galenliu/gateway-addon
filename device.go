@@ -1,8 +1,8 @@
 package addon
 
 import (
-	"addon/wot"
 	"fmt"
+	"github.com/galenliu/gateway-addon/wot"
 	json "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 )
@@ -42,7 +42,8 @@ type Device struct {
 	ID                  string   `json:"id"`
 	Name                string   `json:"name"`
 	AtContext           []string `json:"@context,omitempty"`
-	Title               string   `json:"title,required"`
+	Title               string   `json:"title"`
+	Titles              []string `json:"titles,omitempty"`
 	AtType              []string `json:"@type"`
 	Description         string   `json:"description,omitempty"`
 	CredentialsRequired bool     `json:"credentialsRequired"`
@@ -62,7 +63,7 @@ type Device struct {
 	adapter Owner
 }
 
-func NewDeivceFormString(data string) *Device {
+func NewDeviceFormString(data string) *Device {
 	device := Device{}
 	device.ID = gjson.Get(data, "id").String()
 	device.Title = gjson.Get(data, "title").String()
