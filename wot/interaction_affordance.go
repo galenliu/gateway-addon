@@ -1,63 +1,26 @@
 package wot
 
-import (
-	json "github.com/json-iterator/go"
-	"github.com/tidwall/gjson"
-	"log"
-)
+type Form map[string]string
 
-type InteractionAffordance struct {
-	AtType       string                 `json:"@type"`
-	Title        string                 `json:"title,omitempty"`
-	Titles       map[string]string      `json:"titles,omitempty"`
-	Description  string                 `json:"description,omitempty"`
-	Descriptions map[string]string      `json:"descriptions,omitempty"`
-	Forms        []Form                 `json:"forms,omitempty"`
-	UriVariables map[string]IDataSchema `json:"uriVariables,omitempty"`
+func NewForm(args ...string) Form {
+	m := make(map[string]string, 0)
+	for i, _ := range args {
+		if i%2 == 0 {
+			continue
+		}
+		m[args[i-1]] = args[i]
+	}
+	return m
 }
 
-func NewInteractionAffordanceFromString(description string) *InteractionAffordance {
-	var i = InteractionAffordance{}
+type InteractionAffordance struct {
+	AtType       string `json:"@type"`
+	Title        string `json:"title,omitempty"`
+	Titles       string `json:"titles,omitempty"`
+	Description  string `json:"description,omitempty"`
+	Descriptions string `json:"descriptions,omitempty"`
 
-	if gjson.Get(description, "uriVariables").Exists() {
-		m := gjson.Get(description, "uriVariables").Map()
-		if len(m) > 0 {
-			i.UriVariables = make(map[string]IDataSchema)
-			for k, v := range m {
-				i.UriVariables[k] = NewDataSchemaFromString(v.String())
-			}
-		}
-	}
-	if gjson.Get(description, "title").Exists() {
-		i.Title = gjson.Get(description, "title").String()
-	}
-	if gjson.Get(description, "@type").Exists() {
-		i.AtType = gjson.Get(description, "@type").String()
-	}
+	Forms []Form `json:"forms,omitempty"`
 
-	if gjson.Get(description, "titles").Exists() {
-		for k, v := range gjson.Get(description, "title").Map() {
-			i.Titles[k] = v.String()
-		}
-	}
-
-	if gjson.Get(description, "descriptions").Exists() {
-		for k, v := range gjson.Get(description, "descriptions").Map() {
-			i.Descriptions[k] = v.String()
-		}
-	}
-
-	if gjson.Get(description, "forms").Exists() {
-		for _, v := range gjson.Get(description, "forms").Array() {
-			var f Form
-			err := json.Unmarshal([]byte(v.String()), &f)
-			if err != nil {
-				log.Println(err.Error())
-				continue
-			}
-			i.Forms = append(i.Forms, f)
-		}
-	}
-
-	return &i
+	UriVariables []DataSchema `json:"uriVariables,omitempty"`
 }

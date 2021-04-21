@@ -15,24 +15,23 @@ const (
 )
 
 type IProperty interface {
+	ToString() string
 	SetValue(interface{})
 	GetValue() interface{}
 	GetName() string
 	SetName(string)
 	GetAtType() string
 	GetType() string
-	DoPropertyChanged(string)
+	Update([]byte)
+	GetNotifyDescription() []byte
 
-	MarshalJson() []byte
 	SetOwner(owner Owner)
 }
 
 type IAction interface {
-	MarshalJson() []byte
 }
 
 type IEvent interface {
-	MarshalJson() []byte
 }
 
 type IDevice interface {
@@ -42,7 +41,7 @@ type IDevice interface {
 	GetDescription() string
 	GetID() string
 	ToString() string
-	AsDict() Map
+
 	GetAdapterId() string
 }
 
@@ -219,7 +218,7 @@ func (m *AddonManager) onMessage(data []byte) {
 		data := make(map[string]interface{})
 		data[Aid] = adapterId
 		data[Did] = device.GetID()
-		data["property"] = prop.MarshalJson()
+		data["property"] = prop.ToString()
 		m.send(DevicePropertyChangedNotification, data)
 
 	case DeviceSetPinRequest:

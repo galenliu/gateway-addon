@@ -8,7 +8,7 @@ type ColorModeProperty struct {
 
 func NewColorModeProperty() *ColorModeProperty {
 	p := NewStringProperty(TypeColorModeProperty)
-	p.SetType(TypeString)
+	p.Type = TypeString
 	p.Name = ColorModel
 	p.SetValue("color")
 	p.Enum = []interface{}{"color", "temperature"}

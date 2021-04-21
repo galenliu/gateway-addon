@@ -6,10 +6,10 @@ type NumberProperty struct {
 	*addon.Property
 }
 
-func NewNumberProperty(typ string) *NumberProperty {
-	p := addon.NewProperty(typ)
-	p.SetType(TypeNumber)
-	return &NumberProperty{p}
+func NewNumberProperty(typ, name string) *NumberProperty {
+	number := addon.NewProperty(typ, name)
+	number.Type = TypeNumber
+	return &NumberProperty{number}
 }
 
 // SetValue sets a value

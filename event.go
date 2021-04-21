@@ -1,9 +1,6 @@
 package addon
 
-import (
-	"github.com/galenliu/gateway-addon/wot"
-	json "github.com/json-iterator/go"
-)
+import "addon/wot"
 
 //import json "github.com/json-iterator/go"
 
@@ -15,14 +12,6 @@ type Event struct {
 	DeviceId     string          `json:"deviceId"`
 }
 
-func (e *Event) GetEvent() *Event {
-	return e
-}
-
-func (e *Event) MarshalJson() []byte {
-	data, err := json.Marshal(e)
-	if err == nil {
-		return data
-	}
-	return nil
+func (event *Event) GetEvent() *Event {
+	return event
 }

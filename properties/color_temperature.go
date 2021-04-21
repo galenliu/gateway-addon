@@ -8,8 +8,9 @@ type ColorTemperatureProperty struct {
 
 func NewColorTemperatureProperty() *ColorTemperatureProperty {
 	p := NewIntegerProperty(TypeColorTemperatureProperty)
-	p.SetType(TypeInteger)
+	p.Type = TypeInteger
 	p.Name = ColorTemperature
+	p.SetStepValue(1)
 	p.SetValue(0)
 	p.Unit = UnitKelvin
 

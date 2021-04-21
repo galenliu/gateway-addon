@@ -1,15 +1,11 @@
 package wot
 
-import (
-	json "github.com/json-iterator/go"
-)
-
 const (
-	ApplicationJson = "application/json"
-	LdJSON          = "application/ld+json"
-	SenmlJSON       = "application/senml+json"
-	CBOR            = "application/cbor"
-	SenmlCbor       = "application/senml+cbor"
+	JSON      = "application/json"
+	LdJSON    = "application/ld+json"
+	SenmlJSON = "application/senml+json"
+	CBOR      = "application/cbor"
+	SenmlCbor = "application/senml+cbor"
 
 	XML      = "application/xml"
 	SenmlXML = "application/senml+xml"
@@ -17,73 +13,50 @@ const (
 )
 
 type DataSchema struct {
-	AtType           string        `json:"@type,omitempty"`
-	Title            string        `json:"title"`
-	Titles           []string      `json:"titles,omitempty"`
-	Description      string        `json:"description,omitempty"`
-	Descriptions     []string      `json:"descriptions,omitempty"`
-	Unit             string        `json:"unit,omitempty"`
-	Const            interface{}   `json:"const,omitempty"`
-	OneOf            []DataSchema  `json:"oneOf,,omitempty"`
-	Enum             []interface{} `json:"enum,omitempty"`
-	ReadOnly         bool          `json:"readOnly,omitempty"`
-	WriteOnly        bool          `json:"writeOnly,omitempty"`
-	Format           string        `json:"format,omitempty"`
-	ContentEncoding  string        `json:"contentEncoding,,omitempty"`
-	ContentMediaType string        `json:"contentMediaType,,omitempty"`
+	*InteractionAffordance
+	Type  string      `json:"type"`
+	Const interface{} `json:"const,omitempty"`
+	Unit  string      `json:"unit,omitempty"`
 
-	Type string `json:"type"`
+	OneOf []DataSchema  `json:"oneOf,,omitempty"`
+	Enum  []interface{} `json:"enum,omitempty"`
+
+	ReadOnly  bool `json:"readOnly"`
+	WriteOnly bool `json:"writeOnly"`
+
+	Format           string `json:"format,omitempty"`
+	ContentEncoding  string `json:"contentEncoding,,omitempty"`
+	ContentMediaType string `json:"contentMediaType,,omitempty"`
 }
 
-func NewDataSchemaFromString(data string) IDataSchema {
-	typ := json.Get([]byte(data), "type").ToString()
-	switch typ {
-	case Array:
-		return NewArraySchemaFromString(data)
-	case Boolean:
-		return NewBooleanSchemaFromString(data)
-	case Number:
-		return NewNumberSchemaFromString(data)
-	case Integer:
-		return NewIntegerSchemaFromString(data)
-	case Object:
-		return NewObjectSchemaFromString(data)
-	case String:
-		return NewStringSchemaFromString(data)
-	case Null:
-		return NewNullSchemaFromString(data)
-	default:
-		return nil
-	}
+type ArraySchema struct {
+	Items    []DataSchema `json:"items,omitempty"`
+	MinItems int          `json:"minItems,omitempty"`
+	maxItems int          `json:"maxItems,omitempty"`
 }
 
-func (d *DataSchema) GetType() string {
-	return d.Type
+type NumberSchema struct {
+	Minimum          float64 `json:"minimum,omitempty"`
+	ExclusiveMinimum float64 `json:"exclusiveMinimum,omitempty"`
+	Maximum          float64 `json:"maximum,omitempty"`
+	ExclusiveMaximum float64 `json:"exclusiveMaximum,omitempty"`
+	MultipleOf       float64 `json:"multipleOf,omitempty"`
 }
 
-func (d *DataSchema) SetAtType(s string) {
-	d.AtType = s
+type IntegerSchema struct {
+	Minimum          int64 `json:"minimum,omitempty"`
+	ExclusiveMinimum int64 `json:"exclusiveMinimum,omitempty"`
+	Maximum          int64 `json:"maximum,omitempty"`
+	ExclusiveMaximum int64 `json:"exclusiveMaximum,omitempty"`
+	MultipleOf       int64 `json:"multipleOf,omitempty"`
 }
 
-func (d *DataSchema) SetType(s string) {
-	d.Type = s
+type ObjectSchema struct {
+	Properties map[string]DataSchema `json:"properties"`
+	Required   []string              `json:"required"`
 }
 
-func (d *DataSchema) SetTitle(s string) {
-	d.Title = s
-}
-
-func (d *DataSchema) IsReadOnly() bool {
-	return d.ReadOnly
-}
-
-type IDataSchema interface {
-	GetType() string
-	SetAtType(string)
-
-	IsReadOnly() bool
-	SetType(string)
-	SetTitle(s string)
-	//MarshalJSON() ([]byte, error)
-	//UnmarshalJSON(data []byte) error
+type StringSchema struct {
+	MinLength int64 `json:"minLength"`
+	MaxLength int64 `json:"maxLength"`
 }

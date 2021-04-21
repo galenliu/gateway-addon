@@ -8,7 +8,7 @@ type BooleanProperty struct {
 
 func NewBooleanProperty(typ string) *BooleanProperty {
 	boolean := addon.NewProperty(typ)
-	boolean.SetType(TypeBoolean)
+	boolean.Type = TypeBoolean
 	return &BooleanProperty{boolean}
 }
 
