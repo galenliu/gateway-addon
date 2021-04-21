@@ -1,15 +1,15 @@
 package properties
 
-import "addon"
+import "github.com/galenliu/gateway-addon"
 
 type NumberProperty struct {
 	*addon.Property
 }
 
-func NewNumberProperty(typ, name string) *NumberProperty {
-	number := addon.NewProperty(typ, name)
-	number.Type = TypeNumber
-	return &NumberProperty{number}
+func NewNumberProperty(typ string) *NumberProperty {
+	p := addon.NewProperty(typ)
+	p.SetType(TypeNumber)
+	return &NumberProperty{p}
 }
 
 // SetValue sets a value

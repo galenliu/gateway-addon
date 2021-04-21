@@ -208,4 +208,6 @@ func MessageTypeToString(mt int) string {
 	}
 }
 
+type Map = map[string]interface{}
+
 const IpcDefaultPort = "9500"

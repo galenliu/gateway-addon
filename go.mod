@@ -1,4 +1,4 @@
-module addon
+module github.com/galenliu/gateway-addon
 
 go 1.16
 

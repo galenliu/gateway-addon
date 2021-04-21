@@ -1,6 +1,6 @@
 package properties
 
-import "addon"
+import "github.com/galenliu/gateway-addon"
 
 type BooleanProperty struct {
 	*addon.Property
@@ -8,7 +8,7 @@ type BooleanProperty struct {
 
 func NewBooleanProperty(typ string) *BooleanProperty {
 	boolean := addon.NewProperty(typ)
-	boolean.Type = TypeBoolean
+	boolean.SetType(TypeBoolean)
 	return &BooleanProperty{boolean}
 }
 

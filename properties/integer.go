@@ -1,15 +1,15 @@
 package properties
 
-import "addon"
+import "github.com/galenliu/gateway-addon"
 
 type IntegerProperty struct {
 	*addon.Property
 }
 
 func NewIntegerProperty(typ string) *IntegerProperty {
-	integer := addon.NewProperty(typ)
-	integer.Type = TypeInteger
-	return &IntegerProperty{integer}
+	p := addon.NewProperty(typ)
+	p.SetType(TypeInteger)
+	return &IntegerProperty{p}
 }
 
 // SetValue sets a value
@@ -34,11 +34,10 @@ func (prop *IntegerProperty) OnValueRemoteUpdate(fn func(int)) {
 	})
 }
 
-func (prop *IntegerProperty) SetMinValue(value int) {
-	prop.Minimum = value
+func (prop *IntegerProperty) SetMinValue(v int64) {
+	prop.Property.SetMinValue(v)
 }
 
-func (prop *IntegerProperty) SetMaxValue(value int) {
-	prop.Maximum = value
+func (prop *IntegerProperty) SetMaxValue(v int64) {
+	prop.Property.SetMaxValue(v)
 }
-

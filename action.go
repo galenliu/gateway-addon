@@ -1,28 +1,41 @@
 package addon
 
 import (
-	"addon/wot"
+	"github.com/galenliu/gateway-addon/wot"
+	json "github.com/json-iterator/go"
 )
 
-type Notification func(action *Action)
-
 type Action struct {
-	*wot.InteractionAffordance
-	Name string `json:"name"`
+	*wot.ActionAffordance
 
-	Input      *wot.DataSchema `json:"input,omitempty"`
-	Output     *wot.DataSchema `json:"output,omitempty"`
-	Safe       bool            `json:"safe"`
-	Idempotent bool            `json:"idempotent"`
-	DeviceId   string          `json:"deviceId"`
+	Name     string `json:"name"`
+	DeviceId string `json:"deviceId"`
 }
 
 func NewActionFromString(data string) *Action {
-	a := Action{}
+	var a Action
+	err := json.UnmarshalFromString(data, &a)
+	if err != nil {
+		return nil
+	}
 	return &a
 }
 
 func NewAction() *Action {
 	action := &Action{}
 	return action
+}
+
+func (a *Action) AsDict() Map {
+	return Map{
+		"name": a.Name,
+	}
+}
+
+func (a *Action) MarshalJson() []byte {
+	data, err := json.Marshal(a)
+	if err == nil {
+		return data
+	}
+	return nil
 }
