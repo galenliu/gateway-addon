@@ -34,7 +34,7 @@ const (
 )
 
 type PIN struct {
-	Required bool        `json:"required"`
+	Required bool        `json:"required,omitempty"`
 	Pattern  interface{} `json:"pattern,omitempty"`
 }
 
@@ -96,40 +96,49 @@ func NewDeviceFormString(data string) *Device {
 		device.Pin = pin
 	}
 
-	properties := gjson.Get(data, "properties").Map()
-	if len(properties) > 1 {
-		device.Properties = make(map[string]IProperty)
-		for name, prop := range properties {
-			p := NewPropertyFromString(prop.String())
-			p.DeviceId = device.ID
-			if p != nil {
-				device.Properties[name] = p
+	if gjson.Get(data, "properties").Exists() {
+		properties := gjson.Get(data, "properties").Map()
+		if len(properties) > 1 {
+			device.Properties = make(map[string]IProperty)
+			for name, prop := range properties {
+				p := NewPropertyFromString(prop.String())
+				p.DeviceId = device.ID
+				if p != nil {
+					device.Properties[name] = p
+				}
 			}
 		}
+
 	}
 
-	actions := gjson.Get(data, "actions").Map()
-	if len(actions) > 1 {
-		device.Actions = make(map[string]IAction)
-		for name, a := range properties {
-			action := NewActionFromString(a.String())
-			action.DeviceId = device.ID
-			if action != nil {
-				device.Actions[name] = action
+	if gjson.Get(data, "actions").Exists() {
+		actions := gjson.Get(data, "actions").Map()
+		if len(actions) > 1 {
+			device.Actions = make(map[string]IAction)
+			for name, a := range actions {
+				action := NewActionFromString(a.String())
+				action.DeviceId = device.ID
+				if action != nil {
+					device.Actions[name] = action
+				}
 			}
 		}
+
 	}
 
-	events := gjson.Get(data, "events").Map()
-	if len(events) > 1 {
-		device.Actions = make(map[string]IAction)
-		for name, e := range events {
-			event := NewActionFromString(e.String())
-			event.DeviceId = device.ID
-			if event != nil {
-				device.Events[name] = event
+	if gjson.Get(data, "events").Exists() {
+		events := gjson.Get(data, "events").Map()
+		if len(events) > 1 {
+			device.Actions = make(map[string]IAction)
+			for name, e := range events {
+				event := NewActionFromString(e.String())
+				event.DeviceId = device.ID
+				if event != nil {
+					device.Events[name] = event
+				}
 			}
 		}
+
 	}
 
 	return &device
@@ -141,9 +150,9 @@ func NewDevice(id, title string) *Device {
 	device.Title = title
 	device.AtType = make([]string, 0)
 	device.AtContext = make([]string, 0)
-	device.Properties = make(map[string]IProperty, 5)
-	device.Actions = make(map[string]IAction, 1)
-	device.Events = make(map[string]IEvent, 1)
+	device.Properties = make(map[string]IProperty)
+	device.Actions = make(map[string]IAction)
+	device.Events = make(map[string]IEvent)
 	return device
 }
 
@@ -243,7 +252,7 @@ func (device *Device) AsDict() Map {
 func (device *Device) mapPropertiesToDict() Map {
 	m := make(Map)
 	for name, p := range device.Properties {
-		m[name] = p.AsDict()
+		m[name] = p.MarshalJson()
 	}
 	return m
 }
@@ -251,7 +260,7 @@ func (device *Device) mapPropertiesToDict() Map {
 func (device *Device) mapActionsDictFromFunction() Map {
 	m := make(Map)
 	for name, a := range device.Actions {
-		m[name] = a.AsDict()
+		m[name] = a.MarshalJson()
 	}
 	return m
 }
@@ -259,7 +268,7 @@ func (device *Device) mapActionsDictFromFunction() Map {
 func (device *Device) mapEventsDictFromFunction() Map {
 	m := make(Map)
 	for name, a := range device.Events {
-		m[name] = a.AsDict()
+		m[name] = a.MarshalJson()
 	}
 	return m
 }

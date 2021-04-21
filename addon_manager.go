@@ -22,17 +22,17 @@ type IProperty interface {
 	GetAtType() string
 	GetType() string
 	DoPropertyChanged(string)
-	AsDict() Map
 
+	MarshalJson() []byte
 	SetOwner(owner Owner)
 }
 
 type IAction interface {
-	AsDict() Map
+	MarshalJson() []byte
 }
 
 type IEvent interface {
-	AsDict() Map
+	MarshalJson() []byte
 }
 
 type IDevice interface {
@@ -219,7 +219,7 @@ func (m *AddonManager) onMessage(data []byte) {
 		data := make(map[string]interface{})
 		data[Aid] = adapterId
 		data[Did] = device.GetID()
-		data["property"] = prop.AsDict()
+		data["property"] = prop.MarshalJson()
 		m.send(DevicePropertyChangedNotification, data)
 
 	case DeviceSetPinRequest:

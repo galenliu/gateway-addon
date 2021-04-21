@@ -3,6 +3,7 @@ package wot
 import (
 	"fmt"
 	json "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 )
 
 type PropertyAffordance struct {
@@ -11,8 +12,19 @@ type PropertyAffordance struct {
 	Observable bool `json:"observable"`
 }
 
+func NewPropertyAffordanceFromString(description string) *PropertyAffordance {
+	var p = PropertyAffordance{}
+	p.InteractionAffordance = NewInteractionAffordanceFromString(description)
+	p.IDataSchema = NewDataSchemaFromString(description)
+	if gjson.Get(description, "observable").Exists() {
+		p.Observable = gjson.Get(description, "observable").Bool()
+	}
+	return &p
+}
+
 func (p PropertyAffordance) MarshalJSON() ([]byte, error) {
 
+	//log.Println("property Data Schema type:%s", reflect.TypeOf(p.IDataSchema))
 	if p.IDataSchema == nil {
 		return nil, fmt.Errorf("dataschema err")
 	}
@@ -22,9 +34,19 @@ func (p PropertyAffordance) MarshalJSON() ([]byte, error) {
 		var pa = ArrayPropertyAffordance{p.InteractionAffordance, dd, p.Observable}
 		pa.AtType = dd.AtType
 		return json.MarshalIndent(pa, "", "  ")
+	case ArraySchema:
+		dd := p.IDataSchema.(ArraySchema)
+		var pa = ArrayPropertyAffordance{p.InteractionAffordance, &dd, p.Observable}
+		pa.AtType = dd.AtType
+		return json.MarshalIndent(pa, "", "  ")
 	case *BooleanSchema:
 		dd := p.IDataSchema.(*BooleanSchema)
 		var pa = BooleanPropertyAffordance{p.InteractionAffordance, dd, p.Observable}
+		pa.AtType = dd.AtType
+		return json.MarshalIndent(pa, "", "  ")
+	case BooleanSchema:
+		dd := p.IDataSchema.(BooleanSchema)
+		var pa = BooleanPropertyAffordance{p.InteractionAffordance, &dd, p.Observable}
 		pa.AtType = dd.AtType
 		return json.MarshalIndent(pa, "", "  ")
 	case *NumberSchema:
@@ -32,9 +54,19 @@ func (p PropertyAffordance) MarshalJSON() ([]byte, error) {
 		var pa = NumberPropertyAffordance{p.InteractionAffordance, dd, p.Observable}
 		pa.AtType = dd.AtType
 		return json.MarshalIndent(pa, "", "  ")
+	case NumberSchema:
+		dd := p.IDataSchema.(NumberSchema)
+		var pa = NumberPropertyAffordance{p.InteractionAffordance, &dd, p.Observable}
+		pa.AtType = dd.AtType
+		return json.MarshalIndent(pa, "", "  ")
 	case *IntegerSchema:
 		dd := p.IDataSchema.(*IntegerSchema)
 		var pa = IntegerPropertyAffordance{p.InteractionAffordance, dd, p.Observable}
+		pa.AtType = dd.AtType
+		return json.MarshalIndent(pa, "", "  ")
+	case IntegerSchema:
+		dd := p.IDataSchema.(IntegerSchema)
+		var pa = IntegerPropertyAffordance{p.InteractionAffordance, &dd, p.Observable}
 		pa.AtType = dd.AtType
 		return json.MarshalIndent(pa, "", "  ")
 	case *ObjectSchema:
@@ -42,9 +74,19 @@ func (p PropertyAffordance) MarshalJSON() ([]byte, error) {
 		var pa = ObjectPropertyAffordance{p.InteractionAffordance, dd, p.Observable}
 		pa.AtType = dd.AtType
 		return json.MarshalIndent(pa, "", "  ")
+	case ObjectSchema:
+		dd := p.IDataSchema.(ObjectSchema)
+		var pa = ObjectPropertyAffordance{p.InteractionAffordance, &dd, p.Observable}
+		pa.AtType = dd.AtType
+		return json.MarshalIndent(pa, "", "  ")
 	case *StringSchema:
 		dd := p.IDataSchema.(*StringSchema)
 		var pa = StringPropertyAffordance{p.InteractionAffordance, dd, p.Observable}
+		pa.AtType = dd.AtType
+		return json.MarshalIndent(pa, "", "  ")
+	case StringSchema:
+		dd := p.IDataSchema.(StringSchema)
+		var pa = StringPropertyAffordance{p.InteractionAffordance, &dd, p.Observable}
 		pa.AtType = dd.AtType
 		return json.MarshalIndent(pa, "", "  ")
 	case *NullSchema:
@@ -52,102 +94,15 @@ func (p PropertyAffordance) MarshalJSON() ([]byte, error) {
 		var pa = NullPropertyAffordance{p.InteractionAffordance, dd, p.Observable}
 		pa.AtType = dd.AtType
 		return json.MarshalIndent(pa, "", "  ")
+	case NullSchema:
+		dd := p.IDataSchema.(NullSchema)
+		var pa = NullPropertyAffordance{p.InteractionAffordance, &dd, p.Observable}
+		pa.AtType = dd.AtType
+		return json.MarshalIndent(pa, "", "  ")
 	default:
 		return nil, fmt.Errorf("property type err")
 	}
 }
-
-//func (p *PropertyAffordance) UnmarshalJSON(data []byte) error {
-//
-//	typ := json.Get(data, "type").ToString()
-//
-//	switch typ {
-//	case "array":
-//		var prop ArrayPropertyAffordance
-//		err := json.Unmarshal(data, &prop)
-//		if err != nil {
-//			return err
-//		}
-//		*p = PropertyAffordance{
-//			InteractionAffordance: prop.InteractionAffordance,
-//			IDataSchema:           prop.ArraySchema,
-//			Observable:            prop.Observable,
-//		}
-//
-//	case "boolean":
-//		var prop BooleanPropertyAffordance
-//		err := json.Unmarshal(data, &prop)
-//		if err != nil {
-//			return err
-//		}
-//		p = &PropertyAffordance{
-//			InteractionAffordance: prop.InteractionAffordance,
-//			IDataSchema:           prop.BooleanSchema,
-//			Observable:            prop.Observable,
-//		}
-//
-//	case "number":
-//		var prop NumberPropertyAffordance
-//		err := json.Unmarshal(data, &prop)
-//		if err != nil {
-//			return err
-//		}
-//		p = &PropertyAffordance{
-//			InteractionAffordance: prop.InteractionAffordance,
-//			IDataSchema:           prop.NumberSchema,
-//			Observable:            prop.Observable,
-//		}
-//
-//	case "integer":
-//		var prop IntegerPropertyAffordance
-//		err := json.Unmarshal(data, &prop)
-//		if err != nil {
-//			return err
-//		}
-//		p = &PropertyAffordance{
-//			InteractionAffordance: prop.InteractionAffordance,
-//			IDataSchema:           prop.IntegerSchema,
-//			Observable:            prop.Observable,
-//		}
-//
-//	case "object":
-//		var prop ObjectPropertyAffordance
-//		err := json.Unmarshal(data, &prop)
-//		if err != nil {
-//			return err
-//		}
-//		p = &PropertyAffordance{
-//			InteractionAffordance: prop.InteractionAffordance,
-//			IDataSchema:           prop.ObjectSchema,
-//			Observable:            prop.Observable,
-//		}
-//
-//	case "string":
-//		var prop StringPropertyAffordance
-//		err := json.Unmarshal(data, &prop)
-//		if err != nil {
-//			return err
-//		}
-//		p = &PropertyAffordance{
-//			InteractionAffordance: prop.InteractionAffordance,
-//			IDataSchema:           prop.StringSchema,
-//			Observable:            prop.Observable,
-//		}
-//
-//	case "null":
-//		var prop NullPropertyAffordance
-//		err := json.Unmarshal(data, &prop)
-//		if err != nil {
-//			return err
-//		}
-//		p = &PropertyAffordance{
-//			InteractionAffordance: prop.InteractionAffordance,
-//			IDataSchema:           prop.NullSchema,
-//			Observable:            prop.Observable,
-//		}
-//	}
-//	return nil
-//}
 
 type ArrayPropertyAffordance struct {
 	*InteractionAffordance
