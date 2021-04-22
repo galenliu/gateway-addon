@@ -1,6 +1,6 @@
 package properties
 
-import "github.com/galenliu/gateway-addon"
+import addon "github.com/galenliu/gateway-addon"
 
 type BooleanProperty struct {
 	*addon.Property

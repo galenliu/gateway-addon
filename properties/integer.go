@@ -1,7 +1,5 @@
 package properties
 
-import "github.com/galenliu/gateway-addon"
-
 type IntegerProperty struct {
 	*addon.Property
 }
