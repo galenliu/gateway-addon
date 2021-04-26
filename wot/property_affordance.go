@@ -10,7 +10,8 @@ import (
 type PropertyAffordance struct {
 	*InteractionAffordance
 	IDataSchema
-	Observable bool `json:"observable"`
+	Observable bool        `json:"observable"`
+	Value      interface{} `json:"value,omitempty"`
 }
 
 func NewPropertyAffordanceFromString(description string) *PropertyAffordance {

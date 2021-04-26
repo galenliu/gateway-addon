@@ -62,11 +62,17 @@ func (d *DataSchema) GetType() string {
 }
 
 func (d *DataSchema) SetAtType(s string) {
-	d.AtType = s
+	if s != "" {
+		d.AtType = s
+	}
 }
 
 func (d *DataSchema) SetType(s string) {
-	d.Type = s
+	if s != "" {
+		if s == Number || s == Integer || s == Object || s == Array || s == String || s == Boolean || s == Null {
+			d.Type = s
+		}
+	}
 }
 
 func (d *DataSchema) SetTitle(s string) {

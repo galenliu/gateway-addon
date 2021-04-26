@@ -46,7 +46,7 @@ type Device struct {
 	Titles              []string `json:"titles,omitempty"`
 	AtType              []string `json:"@type"`
 	Description         string   `json:"description,omitempty"`
-	CredentialsRequired bool     `json:"credentialsRequired"`
+	CredentialsRequired bool     `json:"credentialsRequired,omitempty"`
 
 	//Properties map[string]*Property `json:"properties,omitempty"`
 	Properties map[string]IProperty `json:"properties"`
@@ -58,7 +58,7 @@ type Device struct {
 	password  string
 	AdapterId string `json:"adapterId"`
 
-	Forms []wot.Form `json:"forms"`
+	Forms []wot.Form `json:"forms,omitempty"`
 
 	adapter Owner
 }
@@ -66,7 +66,13 @@ type Device struct {
 func NewDeviceFormString(data string) *Device {
 	device := Device{}
 	device.ID = gjson.Get(data, "id").String()
+	if device.ID == "" {
+		return nil
+	}
 	device.Title = gjson.Get(data, "title").String()
+	if device.Title == "" {
+		device.Title = device.ID
+	}
 
 	if gjson.Get(data, "@context").IsArray() {
 		for _, c := range gjson.Get(data, "@context").Array() {
@@ -252,7 +258,7 @@ func (device *Device) AsDict() Map {
 func (device *Device) mapPropertiesToDict() Map {
 	m := make(Map)
 	for name, p := range device.Properties {
-		m[name] = p.MarshalJson()
+		m[name] = p
 	}
 	return m
 }
@@ -260,7 +266,7 @@ func (device *Device) mapPropertiesToDict() Map {
 func (device *Device) mapActionsDictFromFunction() Map {
 	m := make(Map)
 	for name, a := range device.Actions {
-		m[name] = a.MarshalJson()
+		m[name] = a
 	}
 	return m
 }
@@ -268,7 +274,7 @@ func (device *Device) mapActionsDictFromFunction() Map {
 func (device *Device) mapEventsDictFromFunction() Map {
 	m := make(Map)
 	for name, a := range device.Events {
-		m[name] = a.MarshalJson()
+		m[name] = a
 	}
 	return m
 }

@@ -21,11 +21,7 @@ type Property struct {
 
 	Name string `json:"name"`
 
-	Value interface{} `json:"value,omitempty"`
-
 	DeviceId string `json:"deviceId,omitempty"`
-
-	replyChan chan Map
 
 	device            Owner
 	updateOnSameValue bool
@@ -51,7 +47,7 @@ func NewPropertyFromString(description string) *Property {
 	if gjson.Get(description, "value").Exists() {
 		prop.Value = gjson.Get(description, "value").Value()
 	}
-	prop.replyChan = make(chan Map)
+
 	prop.valueChangeFuncs = make([]ChangeFunc, 0)
 	return &prop
 }
@@ -91,7 +87,7 @@ func (p *Property) SetCachedValueAndNotify(value interface{}) {
 	p.device.Send(DevicePropertyChangedNotification, data)
 }
 
-func (p *Property) UpdateValue(value interface{}) {
+func (p *Property) setCachedValue(value interface{}) {
 	value = p.convert(value)
 	switch p.GetType() {
 	case TypeNumber:
@@ -99,6 +95,11 @@ func (p *Property) UpdateValue(value interface{}) {
 	case TypeInteger:
 		value = p.clampInt(int64(value.(int)))
 	}
+	p.Value = value
+}
+
+func (p *Property) UpdateValue(value interface{}) {
+
 	if p.Value == value && !p.updateOnSameValue {
 		return
 	}
@@ -106,7 +107,7 @@ func (p *Property) UpdateValue(value interface{}) {
 		return
 	}
 	oldValue := p.Value
-	p.Value = value
+	p.setCachedValue(value)
 	p.onValueUpdate(p.valueChangeFuncs, value, oldValue)
 }
 
@@ -114,7 +115,6 @@ func (p *Property) onValueUpdate(funcs []ChangeFunc, newValue, oldValue interfac
 	for _, fn := range funcs {
 		fn(p, newValue, oldValue)
 	}
-
 }
 
 func (p *Property) DoPropertyChanged(d string) {
@@ -122,15 +122,11 @@ func (p *Property) DoPropertyChanged(d string) {
 	if title != "" && p.Title != title {
 		p.Title = title
 	}
+	p.SetType(gjson.Get(d, "type").String())
+	p.SetAtType(gjson.Get(d, "@type").String())
 	value := gjson.Get(d, "value").Value()
 	if value != nil && p.Value != value {
-		p.Value = value
-	}
-	select {
-	case p.replyChan <- p.AsDict():
-		return
-	default:
-		return
+		p.setCachedValue(value)
 	}
 }
 
@@ -192,8 +188,8 @@ func (p *Property) SetOwner(owner Owner) {
 	p.device = owner
 }
 
-func (p *Property) AsDict() Map {
-	return Map{
+func (p *Property) AsDict() []byte {
+	m := Map{
 		"name":        p.Name,
 		"value":       p.Value,
 		"title":       p.Title,
@@ -204,6 +200,11 @@ func (p *Property) AsDict() Map {
 		"forms":       p.Forms,
 		"deviceId":    p.DeviceId,
 	}
+	data, err := json.MarshalIndent(&m, "", "  ")
+	if err != nil {
+		return nil
+	}
+	return data
 }
 
 func (p *Property) MarshalJson() []byte {
