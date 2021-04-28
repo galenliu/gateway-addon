@@ -5,7 +5,6 @@ import (
 	"github.com/galenliu/gateway-addon/wot"
 	json "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
-	"github.com/xiam/to"
 	"log"
 )
 
@@ -45,7 +44,13 @@ func NewPropertyFromString(description string) *Property {
 	}
 
 	if gjson.Get(description, "value").Exists() {
-		prop.Value = gjson.Get(description, "value").Value()
+		if gjson.Get(description, "value").Value() != nil {
+			prop.SetCachedValue(gjson.Get(description, "value").Value())
+		} else {
+			prop.SetCachedValue(prop.GetDefaultValue())
+		}
+	} else {
+		prop.SetCachedValue(prop.GetDefaultValue())
 	}
 
 	prop.valueChangeFuncs = make([]ChangeFunc, 0)
@@ -87,17 +92,6 @@ func (p *Property) SetCachedValueAndNotify(value interface{}) {
 	p.device.Send(DevicePropertyChangedNotification, data)
 }
 
-func (p *Property) setCachedValue(value interface{}) {
-	value = p.convert(value)
-	switch p.GetType() {
-	case TypeNumber:
-		value = p.clampFloat(value.(float64))
-	case TypeInteger:
-		value = p.clampInt(int64(value.(int)))
-	}
-	p.Value = value
-}
-
 func (p *Property) UpdateValue(value interface{}) {
 
 	if p.Value == value && !p.updateOnSameValue {
@@ -107,7 +101,7 @@ func (p *Property) UpdateValue(value interface{}) {
 		return
 	}
 	oldValue := p.Value
-	p.setCachedValue(value)
+	p.SetCachedValue(value)
 	p.onValueUpdate(p.valueChangeFuncs, value, oldValue)
 }
 
@@ -126,31 +120,8 @@ func (p *Property) DoPropertyChanged(d string) {
 	p.SetAtType(gjson.Get(d, "@type").String())
 	value := gjson.Get(d, "value").Value()
 	if value != nil && p.Value != value {
-		p.setCachedValue(value)
+		p.SetCachedValue(value)
 	}
-}
-
-func (p *Property) convert(v interface{}) interface{} {
-	switch p.GetType() {
-	case TypeNumber:
-		return to.Float64(v)
-	case TypeInteger:
-		return int(to.Uint64(v))
-	case TypeBoolean:
-		return to.Bool(v)
-	default:
-		return v
-	}
-}
-
-func (p *Property) clampFloat(value float64) float64 {
-	prop := p.IDataSchema.(*wot.NumberSchema)
-	return prop.ClampFloat(value)
-}
-
-func (p *Property) clampInt(value int64) int64 {
-	prop := p.IDataSchema.(*wot.IntegerSchema)
-	return prop.ClampInt(value)
 }
 
 func (p *Property) SetValue(newValue interface{}) {
