@@ -25,7 +25,7 @@ type IProperty interface {
 	DoPropertyChanged(string)
 
 	MarshalJson() []byte
-	SetOwner(owner Owner)
+	SetDeviceProxy(device IDevice)
 }
 
 type IAction interface {
@@ -37,6 +37,7 @@ type IEvent interface {
 }
 
 type IDevice interface {
+	Send(int, map[string]interface{})
 	GetProperty(name string) IProperty
 	SetCredentials(username string, password string) error
 	SetPin(pin interface{}) error

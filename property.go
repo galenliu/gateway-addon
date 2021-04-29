@@ -1,7 +1,6 @@
 package addon
 
 import (
-	"fmt"
 	"github.com/galenliu/gateway-addon/wot"
 	json "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
@@ -11,10 +10,6 @@ import (
 type ChangeFunc func(property *Property, newValue, oldValue interface{})
 type GetFunc func() interface{}
 
-type Owner interface {
-	Send(int, map[string]interface{})
-}
-
 type Property struct {
 	*wot.PropertyAffordance
 
@@ -22,7 +17,7 @@ type Property struct {
 
 	DeviceId string `json:"deviceId,omitempty"`
 
-	device            Owner
+	device            IDevice
 	updateOnSameValue bool
 
 	valueChangeFuncs []ChangeFunc
@@ -74,10 +69,13 @@ func (p *Property) OnValueGet(fn GetFunc) {
 	p.valueGetFunc = fn
 }
 
+// GetValue 获取Device Property Value
+
 func (p *Property) GetValue() interface{} {
 	return p.getValue()
 }
 
+//回调valueGetFunc，向设备发送GetValue请求。
 func (p *Property) getValue() interface{} {
 	if p.valueGetFunc != nil {
 		p.UpdateValue(p.valueGetFunc())
@@ -88,7 +86,7 @@ func (p *Property) getValue() interface{} {
 func (p *Property) SetCachedValueAndNotify(value interface{}) {
 	p.UpdateValue(value)
 	data := make(map[string]interface{})
-	data["property"] = p.ToString()
+	data["property"] = p.AsDict()
 	p.device.Send(DevicePropertyChangedNotification, data)
 }
 
@@ -142,21 +140,8 @@ func (p *Property) GetAtType() string {
 	return p.AtType
 }
 
-//func (prop *Property) MarshalJSON() ([]byte, error) {
-//	return json.MarshalIndent(prop, "", " ")
-//}
-
-func (p *Property) ToString() string {
-	str, err := json.MarshalToString(p)
-	if err != nil {
-		fmt.Print(err.Error())
-		return ""
-	}
-	return str
-}
-
-func (p *Property) SetOwner(owner Owner) {
-	p.device = owner
+func (p *Property) SetDeviceProxy(device IDevice) {
+	p.device = device
 }
 
 func (p *Property) AsDict() []byte {
