@@ -38,6 +38,10 @@ type PIN struct {
 	Pattern  interface{} `json:"pattern,omitempty"`
 }
 
+type AdapterProxy interface {
+	Send(int, map[string]interface{})
+}
+
 type Device struct {
 	ID                  string   `json:"id"`
 	Name                string   `json:"name"`
@@ -60,19 +64,20 @@ type Device struct {
 
 	Forms []wot.Form `json:"forms,omitempty"`
 
-	adapter Owner
+	adapter AdapterProxy
 }
 
-func NewDeviceFormString(data string) *Device {
-	device := Device{}
-	device.ID = gjson.Get(data, "id").String()
-	if device.ID == "" {
+func NewDeviceFormString(data string, adapter AdapterProxy) *Device {
+
+	id := gjson.Get(data, "id").String()
+	if id == "" {
 		return nil
 	}
-	device.Title = gjson.Get(data, "title").String()
-	if device.Title == "" {
-		device.Title = device.ID
+	title := gjson.Get(data, "title").String()
+	if title == "" {
+		title = id
 	}
+	device := NewDevice(id, title, adapter)
 
 	if gjson.Get(data, "@context").IsArray() {
 		for _, c := range gjson.Get(data, "@context").Array() {
@@ -105,9 +110,9 @@ func NewDeviceFormString(data string) *Device {
 	if gjson.Get(data, "properties").Exists() {
 		properties := gjson.Get(data, "properties").Map()
 		if len(properties) > 1 {
-			device.Properties = make(map[string]IProperty)
+
 			for name, prop := range properties {
-				p := NewPropertyFromString(prop.String())
+				p := NewPropertyFromString(prop.String(), device)
 				p.DeviceId = device.ID
 				if p != nil {
 					device.Properties[name] = p
@@ -120,7 +125,7 @@ func NewDeviceFormString(data string) *Device {
 	if gjson.Get(data, "actions").Exists() {
 		actions := gjson.Get(data, "actions").Map()
 		if len(actions) > 1 {
-			device.Actions = make(map[string]IAction)
+
 			for name, a := range actions {
 				action := NewActionFromString(a.String())
 				action.DeviceId = device.ID
@@ -135,7 +140,7 @@ func NewDeviceFormString(data string) *Device {
 	if gjson.Get(data, "events").Exists() {
 		events := gjson.Get(data, "events").Map()
 		if len(events) > 1 {
-			device.Actions = make(map[string]IAction)
+
 			for name, e := range events {
 				event := NewActionFromString(e.String())
 				event.DeviceId = device.ID
@@ -147,10 +152,10 @@ func NewDeviceFormString(data string) *Device {
 
 	}
 
-	return &device
+	return device
 }
 
-func NewDevice(id, title string) *Device {
+func NewDevice(id, title string, adp AdapterProxy) *Device {
 	device := &Device{}
 	device.ID = id
 	device.Title = title
@@ -159,6 +164,9 @@ func NewDevice(id, title string) *Device {
 	device.Properties = make(map[string]IProperty)
 	device.Actions = make(map[string]IAction)
 	device.Events = make(map[string]IEvent)
+	if adp != nil {
+		device.adapter = adp
+	}
 	return device
 }
 

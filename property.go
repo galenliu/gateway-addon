@@ -10,14 +10,17 @@ import (
 type ChangeFunc func(property *Property, newValue, oldValue interface{})
 type GetFunc func() interface{}
 
+type DeviceProxy interface {
+	Send(int, map[string]interface{})
+}
+
 type Property struct {
 	*wot.PropertyAffordance
 
-	Name string `json:"name"`
-
+	Name     string `json:"name"`
 	DeviceId string `json:"deviceId,omitempty"`
 
-	device            IDevice
+	device            DeviceProxy
 	updateOnSameValue bool
 
 	valueChangeFuncs []ChangeFunc
@@ -25,11 +28,14 @@ type Property struct {
 	verbose          bool
 }
 
-func NewPropertyFromString(description string) *Property {
-	var prop Property
+func NewPropertyFromString(description string, proxy DeviceProxy) *Property {
+
+	name := gjson.Get(description, "name").String()
+	deviceId := gjson.Get(description, "deviceId").String()
+
+	prop := NewProperty(name, deviceId, proxy, false)
 
 	prop.PropertyAffordance = wot.NewPropertyAffordanceFromString(description)
-
 	if gjson.Get(description, "name").Exists() {
 		prop.Name = gjson.Get(description, "name").String()
 	}
@@ -49,15 +55,28 @@ func NewPropertyFromString(description string) *Property {
 	}
 
 	prop.valueChangeFuncs = make([]ChangeFunc, 0)
-	return &prop
+
+	var onChanged = func(prop *Property, new interface{}, old interface{}) {
+		if proxy != nil {
+			data := make(map[string]interface{})
+			data["property"] = prop.AsDict()
+			proxy.Send(DevicePropertyChangedNotification, data)
+		}
+	}
+	prop.valueChangeFuncs = append(prop.valueChangeFuncs, onChanged)
+	return prop
 }
 
-func NewProperty(typ string) *Property {
+func NewProperty(name, deviceId string, device DeviceProxy, verbose bool) *Property {
 	prop := &Property{
 		valueChangeFuncs: make([]ChangeFunc, 0),
 	}
-	prop.SetAtType(typ)
-	prop.verbose = true
+	prop.Name = name
+	prop.DeviceId = deviceId
+	if device != nil {
+		prop.device = device
+	}
+	prop.verbose = verbose
 	return prop
 }
 
@@ -85,9 +104,6 @@ func (p *Property) getValue() interface{} {
 
 func (p *Property) SetCachedValueAndNotify(value interface{}) {
 	p.UpdateValue(value)
-	data := make(map[string]interface{})
-	data["property"] = p.AsDict()
-	p.device.Send(DevicePropertyChangedNotification, data)
 }
 
 func (p *Property) UpdateValue(value interface{}) {
@@ -110,6 +126,19 @@ func (p *Property) onValueUpdate(funcs []ChangeFunc, newValue, oldValue interfac
 }
 
 func (p *Property) DoPropertyChanged(d string) {
+	title := gjson.Get(d, "title").String()
+	if title != "" && p.Title != title {
+		p.Title = title
+	}
+	p.SetType(gjson.Get(d, "type").String())
+	p.SetAtType(gjson.Get(d, "@type").String())
+	value := gjson.Get(d, "value").Value()
+	if value != nil && p.Value != value {
+		p.SetCachedValue(value)
+	}
+}
+
+func (p *Property) UpdateProperty(d string) {
 	title := gjson.Get(d, "title").String()
 	if title != "" && p.Title != title {
 		p.Title = title
@@ -147,7 +176,7 @@ func (p *Property) SetDeviceProxy(device IDevice) {
 func (p *Property) AsDict() []byte {
 	m := Map{
 		"name":        p.Name,
-		"value":       p.Value,
+		"value":       p.GetValue(),
 		"title":       p.Title,
 		"type":        p.GetType(),
 		"@type":       p.AtType,

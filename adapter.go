@@ -77,6 +77,10 @@ func (a *Adapter) SendUnpairingPrompt(prompt, url string, did string) {
 	a.manager.send(AdapterUnpairingPromptNotification, data)
 }
 
+func (a *Adapter) Send(mt int, data map[string]interface{}) {
+	a.manager.send(mt, data)
+}
+
 func (a *Adapter) StartPairing(timeout float64) {
 	if a.verbose {
 		log.Printf("adapter:(%s)- StartPairing() not implemented", a.GetID())

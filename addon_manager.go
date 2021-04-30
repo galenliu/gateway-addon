@@ -22,7 +22,9 @@ type IProperty interface {
 	GetAtType() string
 	GetType() string
 	AsDict() []byte
+
 	DoPropertyChanged(string)
+	UpdateProperty(string)
 
 	MarshalJson() []byte
 	SetDeviceProxy(device IDevice)
@@ -58,13 +60,15 @@ type IAdapter interface {
 	HandleDeviceSaved(device IDevice)
 	HandleDeviceRemoved(device IDevice)
 
+	Send(mt int, data map[string]interface{})
+
 	getDevice(deviceId string) IDevice
 	setManager(manager *AddonManager)
 }
 
 type AddonManager struct {
 	ipcClient   *IpcClient
-	adapters    map[string]IAdapter
+	adapters    map[string]IAdapter ``
 	packageName string
 	verbose     bool
 	running     bool
