@@ -22,11 +22,11 @@ type IProperty interface {
 	GetAtType() string
 	GetType() string
 	AsDict() []byte
+	ToValue(interface{}) interface{}
 
 	DoPropertyChanged(string)
 	UpdateProperty(string)
 
-	MarshalJson() []byte
 	SetDeviceProxy(device IDevice)
 }
 
@@ -45,7 +45,6 @@ type IDevice interface {
 	SetPin(pin interface{}) error
 	GetDescription() string
 	GetID() string
-	ToString() string
 	AsDict() Map
 	GetAdapterId() string
 }
@@ -111,7 +110,11 @@ func (m *AddonManager) handleDeviceAdded(device IDevice) {
 	}
 	data := make(map[string]interface{})
 	data[Aid] = device.GetID()
-	data["device"] = device.ToString()
+	description, err := json.Marshal(device)
+	if err != nil {
+		return
+	}
+	data["device"] = description
 	m.send(DeviceAddedNotification, data)
 }
 

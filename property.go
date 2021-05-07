@@ -192,10 +192,21 @@ func (p *Property) AsDict() []byte {
 	return data
 }
 
-func (p *Property) MarshalJson() []byte {
-	data, err := json.Marshal(p)
-	if err == nil {
-		return data
+func (p *Property) MarshalJSON() ([]byte, error) {
+	m := Map{
+		"name":        p.Name,
+		"value":       p.GetValue(),
+		"title":       p.Title,
+		"type":        p.GetType(),
+		"@type":       p.AtType,
+		"description": p.Description,
+		"readOnly":    p.IsReadOnly(),
+		"forms":       p.Forms,
+		"deviceId":    p.DeviceId,
 	}
-	return nil
+	data, err := json.MarshalIndent(&m, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }

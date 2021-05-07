@@ -30,6 +30,12 @@ func (p *PropertyAffordance) SetCachedValue(value interface{}) {
 	p.Value = p.clamp(value)
 }
 
+func (p *PropertyAffordance) ToValue(value interface{}) interface{} {
+	newValue := p.convert(value)
+	newValue = p.convert(newValue)
+	return newValue
+}
+
 //确保属性值相应的类型
 func (p *PropertyAffordance) convert(v interface{}) interface{} {
 	switch p.GetType() {

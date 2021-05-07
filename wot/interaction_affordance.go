@@ -61,3 +61,7 @@ func NewInteractionAffordanceFromString(description string) *InteractionAffordan
 
 	return &i
 }
+
+func (i *InteractionAffordance) MarshalJSON() ([]byte, error) {
+	return json.Marshal(i)
+}

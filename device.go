@@ -238,12 +238,8 @@ func (device *Device) SetPin(pin interface{}) error {
 	return nil
 }
 
-func (device *Device) ToString() string {
-	data, err := json.MarshalIndent(device, "", " ")
-	if err != nil {
-		return string(data)
-	}
-	return ""
+func (device *Device) MarshalJSON() ([]byte, error) {
+	return json.MarshalIndent(device, "", " ")
 }
 
 func (device *Device) AsDict() Map {

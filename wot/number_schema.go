@@ -41,3 +41,7 @@ func (n NumberSchema) ClampFloat(value float64) float64 {
 	}
 	return value
 }
+
+func (n *NumberSchema) MarshalJSON() ([]byte, error) {
+	return json.Marshal(n)
+}

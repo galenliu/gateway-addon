@@ -34,3 +34,7 @@ func NewObjectSchemaFromString(data string) *ObjectSchema {
 	s.DataSchema = &ds
 	return &s
 }
+
+func (n ObjectSchema) MarshalJSON() ([]byte, error) {
+	return json.Marshal(n)
+}

@@ -16,3 +16,7 @@ func NewBooleanSchemaFromString(data string) *BooleanSchema {
 	s.DataSchema = &ds
 	return &s
 }
+
+func (n BooleanSchema) MarshalJSON() ([]byte, error) {
+	return json.Marshal(n)
+}

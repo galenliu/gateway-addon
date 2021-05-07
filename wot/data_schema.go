@@ -99,6 +99,7 @@ type IDataSchema interface {
 	SetType(string)
 	SetTitle(s string)
 	SetEnum([]interface{})
+
 	//MarshalJSON() ([]byte, error)
 	//UnmarshalJSON(data []byte) error
 }

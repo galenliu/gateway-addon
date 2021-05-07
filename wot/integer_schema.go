@@ -41,3 +41,7 @@ func (n IntegerSchema) ClampInt(value int64) int64 {
 	}
 	return value
 }
+
+func (n IntegerSchema) MarshalJSON() ([]byte, error) {
+	return json.Marshal(n)
+}

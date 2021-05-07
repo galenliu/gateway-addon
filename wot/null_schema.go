@@ -16,3 +16,7 @@ func NewNullSchemaFromString(data string) *NullSchema {
 	s.DataSchema = &ds
 	return &s
 }
+
+func (n NullSchema) MarshalJSON() ([]byte, error) {
+	return json.Marshal(n)
+}

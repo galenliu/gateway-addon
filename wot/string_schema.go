@@ -24,3 +24,7 @@ func NewStringSchemaFromString(data string) *StringSchema {
 	s.DataSchema = &ds
 	return &s
 }
+
+func (s *StringSchema) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s)
+}

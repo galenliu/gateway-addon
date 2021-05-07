@@ -30,3 +30,7 @@ func NewArraySchemaFromString(data string) *ArraySchema {
 	s.DataSchema = &ds
 	return &s
 }
+
+func (n *ArraySchema) MarshalJSON() ([]byte, error) {
+	return json.Marshal(n)
+}
