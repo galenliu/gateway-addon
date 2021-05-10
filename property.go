@@ -33,7 +33,7 @@ func NewPropertyFromString(description string, proxy DeviceProxy) *Property {
 	name := gjson.Get(description, "name").String()
 	deviceId := gjson.Get(description, "deviceId").String()
 
-	prop := NewProperty(name, deviceId, proxy, false)
+	prop := initProperty(name, deviceId, proxy, false)
 
 	prop.PropertyAffordance = wot.NewPropertyAffordanceFromString(description)
 	if gjson.Get(description, "name").Exists() {
@@ -67,7 +67,7 @@ func NewPropertyFromString(description string, proxy DeviceProxy) *Property {
 	return prop
 }
 
-func NewProperty(name, deviceId string, device DeviceProxy, verbose bool) *Property {
+func initProperty(name, deviceId string, device DeviceProxy, verbose bool) *Property {
 	prop := &Property{
 		valueChangeFuncs: make([]ChangeFunc, 0),
 	}
@@ -77,6 +77,13 @@ func NewProperty(name, deviceId string, device DeviceProxy, verbose bool) *Prope
 		prop.device = device
 	}
 	prop.verbose = verbose
+	return prop
+}
+
+func NewProperty(typ string) *Property {
+	prop := &Property{
+		valueChangeFuncs: make([]ChangeFunc, 0),
+	}
 	return prop
 }
 

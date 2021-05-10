@@ -1,14 +1,18 @@
 package properties
 
-import addon "github.com/galenliu/gateway-addon"
+import (
+	addon "github.com/galenliu/gateway-addon"
+	"github.com/galenliu/gateway-addon/wot"
+)
 
 type BooleanProperty struct {
 	*addon.Property
 }
 
 func NewBooleanProperty(typ string) *BooleanProperty {
-	boolean := addon.NewProperty(typ)
-	boolean.SetType(TypeBoolean)
+	boolean := &addon.Property{}
+	boolean.IDataSchema = wot.NewBooleanSchema()
+	boolean.SetAtType(typ)
 	return &BooleanProperty{boolean}
 }
 

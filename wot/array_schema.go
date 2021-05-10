@@ -31,6 +31,12 @@ func NewArraySchemaFromString(data string) *ArraySchema {
 	return &s
 }
 
+func NewArraySchema() *ArraySchema {
+	d := &ArraySchema{}
+	d.Type = Array
+	return d
+}
+
 func (n *ArraySchema) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n)
 }

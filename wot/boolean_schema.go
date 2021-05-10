@@ -6,6 +6,12 @@ type BooleanSchema struct {
 	*DataSchema
 }
 
+func NewBooleanSchema() *BooleanSchema {
+	b := &BooleanSchema{}
+	b.Type = Boolean
+	return b
+}
+
 func NewBooleanSchemaFromString(data string) *BooleanSchema {
 	var ds DataSchema
 	err := json.Unmarshal([]byte(data), &ds)

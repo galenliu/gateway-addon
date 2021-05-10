@@ -30,6 +30,12 @@ func NewNumberSchemaFromString(data string) *NumberSchema {
 	return &s
 }
 
+func NewNumberSchema() *NumberSchema {
+	d := &NumberSchema{}
+	d.Type = Number
+	return d
+}
+
 func (n NumberSchema) ClampFloat(value float64) float64 {
 	if n.Maximum != 0 {
 		if value > n.Maximum {

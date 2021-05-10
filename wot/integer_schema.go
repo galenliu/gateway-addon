@@ -7,11 +7,12 @@ import (
 
 type IntegerSchema struct {
 	*DataSchema
-	Minimum          int64 `json:"minimum"`
-	ExclusiveMinimum int64 `json:"exclusiveMinimum,omitempty"`
-	Maximum          int64 `json:"maximum,omitempty"`
-	ExclusiveMaximum int64 `json:"exclusiveMaximum,omitempty"`
-	MultipleOf       int64 `json:"multipleOf,omitempty"`
+	Type             string `json:"type"`
+	Minimum          int64  `json:"minimum"`
+	ExclusiveMinimum int64  `json:"exclusiveMinimum,omitempty"`
+	Maximum          int64  `json:"maximum,omitempty"`
+	ExclusiveMaximum int64  `json:"exclusiveMaximum,omitempty"`
+	MultipleOf       int64  `json:"multipleOf,omitempty"`
 }
 
 func NewIntegerSchemaFromString(data string) *IntegerSchema {
@@ -28,6 +29,12 @@ func NewIntegerSchemaFromString(data string) *IntegerSchema {
 	s.MultipleOf = gjson.Get(data, "multipleOf").Int()
 	s.DataSchema = &ds
 	return &s
+}
+
+func NewIntegerSchema() *IntegerSchema {
+	d := &IntegerSchema{}
+	d.Type = Integer
+	return d
 }
 
 func (n IntegerSchema) ClampInt(value int64) int64 {
