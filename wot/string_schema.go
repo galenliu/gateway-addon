@@ -17,12 +17,17 @@ func NewStringSchemaFromString(data string) *StringSchema {
 	if err != nil {
 		return nil
 	}
-	var s = StringSchema{}
+	var s = NewStringSchema()
 	s.MinLength = gjson.Get(data, "minLength").Int()
 	s.MaxLength = gjson.Get(data, "maxLength").Int()
 
 	s.DataSchema = &ds
-	return &s
+	return s
+}
+
+func NewStringSchema() *StringSchema {
+	d := &StringSchema{}
+	return d
 }
 
 func (s *StringSchema) MarshalJSON() ([]byte, error) {

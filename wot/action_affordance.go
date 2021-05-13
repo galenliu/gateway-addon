@@ -51,3 +51,8 @@ func NewActionAffordanceFromString(data string) *ActionAffordance {
 	}
 	return &a
 }
+
+func NewActionAffordance() *ActionAffordance {
+	aa := &ActionAffordance{InteractionAffordance: NewInteractionAffordance()}
+	return aa
+}

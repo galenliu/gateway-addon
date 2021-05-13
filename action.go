@@ -9,7 +9,7 @@ type Action struct {
 	*wot.ActionAffordance
 
 	Name     string `json:"name"`
-	DeviceId string `json:"deviceId"`
+	DeviceId string `json:"deviceId,omitempty"`
 }
 
 func NewActionFromString(data string) *Action {

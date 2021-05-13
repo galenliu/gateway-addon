@@ -20,19 +20,19 @@ func NewNumberSchemaFromString(data string) *NumberSchema {
 	if err != nil {
 		return nil
 	}
-	var s = NumberSchema{}
+	var s = NewNumberSchema()
 	s.Minimum = gjson.Get(data, "minimum").Float()
 	s.ExclusiveMinimum = gjson.Get(data, "exclusiveMinimum").Float()
 	s.Maximum = gjson.Get(data, "maximum").Float()
 	s.ExclusiveMaximum = gjson.Get(data, "exclusiveMaximum").Float()
 	s.MultipleOf = gjson.Get(data, "multipleOf").Float()
 	s.DataSchema = &ds
-	return &s
+	return s
 }
 
 func NewNumberSchema() *NumberSchema {
 	d := &NumberSchema{}
-	d.Type = Number
+
 	return d
 }
 

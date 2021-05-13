@@ -1,6 +1,7 @@
 package wot
 
 import (
+	"fmt"
 	json "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 )
@@ -11,13 +12,23 @@ type ObjectSchema struct {
 	Required   []string               `json:"required,omitempty"`
 }
 
+func NewObjectSchema() *ObjectSchema {
+	obj := &ObjectSchema{}
+	obj.Properties = make(map[string]IDataSchema)
+	obj.DataSchema = &DataSchema{
+		Type: Object,
+	}
+	return obj
+}
+
 func NewObjectSchemaFromString(data string) *ObjectSchema {
 	var ds DataSchema
 	err := json.Unmarshal([]byte(data), &ds)
 	if err != nil {
+		fmt.Print(err.Error())
 		return nil
 	}
-	var s = ObjectSchema{}
+	var s = NewObjectSchema()
 	m := gjson.Get(data, "properties").Map()
 	if len(m) > 0 {
 		s.Properties = make(map[string]IDataSchema)
@@ -32,9 +43,9 @@ func NewObjectSchemaFromString(data string) *ObjectSchema {
 		}
 	}
 	s.DataSchema = &ds
-	return &s
+	return s
 }
 
-func (n ObjectSchema) MarshalJSON() ([]byte, error) {
+func (n *ObjectSchema) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n)
 }
