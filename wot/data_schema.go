@@ -61,6 +61,10 @@ func (d *DataSchema) GetType() string {
 	return d.Type
 }
 
+func (d *DataSchema) GetAtType() string {
+	return d.AtType
+}
+
 func (d *DataSchema) SetAtType(s string) {
 	if s != "" {
 		d.AtType = s
@@ -93,6 +97,7 @@ func (d *DataSchema) SetEnum(e []interface{}) {
 
 type IDataSchema interface {
 	GetType() string
+	GetAtType()string
 	SetAtType(string)
 	SetUnit(string)
 	IsReadOnly() bool

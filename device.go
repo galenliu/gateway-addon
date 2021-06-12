@@ -7,32 +7,6 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-const (
-	Alarm                    = "Alarm"
-	AirQualitySensor         = "AirQualitySensor"
-	BarometricPressureSensor = "BarometricPressureSensor"
-	BinarySensor             = "BinarySensor"
-	Camera                   = "Camera"
-	ColorControl             = "ColorControl"
-	ColorSensor              = "ColorSensor"
-	DoorSensor               = "DoorSensor"
-	EnergyMonitor            = "EnergyMonitor"
-	HumiditySensor           = "HumiditySensor"
-	LeakSensor               = "LeakSensor"
-	Light                    = "Light"
-	Lock                     = "Lock"
-	MotionSensor             = "MotionSensor"
-	MultiLevelSensor         = "MultiLevelSensor"
-	MultiLevelSwitch         = "MultiLevelSwitch"
-	OnOffSwitch              = "OnOffSwitch"
-	SmartPlug                = "SmartPlug"
-	SmokeSensor              = "SmokeSensor"
-	TemperatureSensor        = "TemperatureSensor"
-	Thermostat               = "Thermostat"
-	VideoCamera              = "VideoCamera"
-	Context                  = "https://webthings.io/schemas"
-)
-
 type PIN struct {
 	Required bool        `json:"required,omitempty"`
 	Pattern  interface{} `json:"pattern,omitempty"`
