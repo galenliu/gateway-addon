@@ -2,7 +2,7 @@ package properties
 
 import (
 	addon "github.com/galenliu/gateway-addon"
-	"github.com/galenliu/gateway-addon/wot"
+	"github.com/galenliu/gateway/wot/definitions/data_schema"
 )
 
 type BooleanProperty struct {
@@ -11,7 +11,7 @@ type BooleanProperty struct {
 
 func NewBooleanProperty(typ string) *BooleanProperty {
 	boolean := &addon.Property{}
-	boolean.IDataSchema = wot.NewBooleanSchema()
+	boolean.IDataSchema = data_schema.NewBooleanSchema()
 	boolean.SetAtType(typ)
 	return &BooleanProperty{boolean}
 }

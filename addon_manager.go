@@ -44,6 +44,7 @@ type IDevice interface {
 	SetCredentials(username string, password string) error
 	SetPin(pin interface{}) error
 	GetDescription() string
+	ToJson() string
 	GetID() string
 	AsDict() Map
 	GetAdapterId() string

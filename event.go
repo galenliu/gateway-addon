@@ -1,18 +1,18 @@
 package addon
 
 import (
-	"github.com/galenliu/gateway-addon/wot"
+	"github.com/galenliu/gateway/wot/definitions/data_schema"
 	json "github.com/json-iterator/go"
 )
 
 //import json "github.com/json-iterator/go"
 
 type Event struct {
-	Name         string          `json:"name"`
-	Subscription *wot.DataSchema `json:"subscription,omitempty"`
-	Data         *wot.DataSchema `json:"data,omitempty"`
-	Cancellation *wot.DataSchema `json:"cancellation,omitempty"`
-	DeviceId     string          `json:"deviceId"`
+	Name         string                  `json:"name"`
+	Subscription *data_schema.DataSchema `json:"subscription,omitempty"`
+	Data         *data_schema.DataSchema `json:"data,omitempty"`
+	Cancellation *data_schema.DataSchema `json:"cancellation,omitempty"`
+	DeviceId     string                  `json:"deviceId"`
 }
 
 func (e *Event) GetEvent() *Event {

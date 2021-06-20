@@ -2,7 +2,7 @@ package addon
 
 import (
 	"fmt"
-	"github.com/galenliu/gateway-addon/wot"
+	"github.com/galenliu/gateway/wot/definitions/hypermedia_controls "
 	json "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 )
@@ -36,7 +36,7 @@ type Device struct {
 	password  string
 	AdapterId string `json:"adapterId"`
 
-	Forms []wot.Form `json:"forms,omitempty"`
+	Forms []hypermedia_controls_.Form `json:"forms,omitempty"`
 
 	adapter AdapterProxy
 }
@@ -154,6 +154,14 @@ func (device *Device) SetDescription(dsc string) {
 
 func (device *Device) GetDescription() string {
 	return device.Description
+}
+
+func (device *Device) ToJson() string {
+	data, err := json.MarshalIndent(device, "", " ")
+	if err != nil {
+		return string(data)
+	}
+	return ""
 }
 
 func (device *Device) SetTitle(title string) {
