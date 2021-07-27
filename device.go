@@ -2,7 +2,7 @@ package addon
 
 import (
 	"fmt"
-	"github.com/galenliu/gateway/wot/definitions/hypermedia_controls "
+
 	json "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 )
