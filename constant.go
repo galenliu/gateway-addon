@@ -57,7 +57,7 @@ const (
 	Thermostat               = "Thermostat"
 	VideoCamera              = "VideoCamera"
 
-	Context                  = "https://webthings.io/schemas"
+	Context = "https://webthings.io/schemas"
 
 	OpenProperty              = "OpenProperty"
 	PushedProperty            = "PushedProperty"
