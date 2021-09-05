@@ -107,7 +107,7 @@ func (m *AddonManager) AddAdapters(adapters ...IAdapter) {
 
 func (m *AddonManager) handleDeviceAdded(device IDevice) {
 	if m.verbose {
-		log.Printf("AddonManager: handle_device_added: %s", device.GetID())
+		log.Printf("addonManager: handle_device_added: %s", device.GetID())
 	}
 	data := make(map[string]interface{})
 	data[Aid] = device.GetID()
