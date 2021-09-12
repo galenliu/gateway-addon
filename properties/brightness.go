@@ -7,13 +7,13 @@ type BrightnessProperty struct {
 }
 
 func NewBrightnessProperty() *BrightnessProperty {
-	p := NewIntegerProperty(TypeBrightnessProperty)
-	p.SetType(TypeInteger)
+	p := &IntegerProperty{}
+	p.Property.Type =TypeInteger
 	p.Name = "bright"
 	p.SetMinValue(0)
 	p.SetMaxValue(100)
-	p.SetValue(0)
-	p.SetUnit(UnitPercentage)
+	//p.SetValue(0)
+	//p.SetUnit(UnitPercentage)
 
 	return &BrightnessProperty{p}
 }

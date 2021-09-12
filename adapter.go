@@ -2,15 +2,17 @@ package addon
 
 import (
 	"fmt"
+	"github.com/galenliu/gateway-addon/devices"
 	"log"
 	"sync"
 )
 
 type onPairingFunc func(timeout float64)
 type OnCancelPairingFunc func()
-type OnDeviceSavedFunc func(deivceId string, device *Device)
+type OnDeviceSavedFunc func(deivceId string, device *devices.Device)
 type OnSetCredentialsFunc func(deivceId, username, password string)
-type OnSetPinFunc func(deivceId string, pin PIN) error
+
+//type OnSetPinFunc func(deivceId string, devices.P) error
 
 type Adapter struct {
 	Devices     map[string]IDevice
@@ -48,9 +50,9 @@ func (a *Adapter) SendError(message string) {
 	a.manager.send(PluginErrorNotification, data)
 }
 
-func (a *Adapter) ConnectedNotify(device *Device, connected bool) {
-	a.manager.sendConnectedStateNotification(device, connected)
-}
+//func (a *Adapter) ConnectedNotify(device *Device, connected bool) {
+//	a.manager.sendConnectedStateNotification(device, connected)
+//}
 
 //向前端UI发送提示
 func (a *Adapter) SendPairingPrompt(prompt, url string, did string) {

@@ -7,9 +7,9 @@ type OnOffProperty struct {
 }
 
 func NewOnOffProperty() *OnOffProperty {
-	p := NewBooleanProperty(TypeOnOffProperty)
-	p.SetType(TypeBoolean)
+	p := &OnOffProperty{}
+	p.Type = TypeBoolean
 	p.Name = On
-	p.SetValue(false)
-	return &OnOffProperty{p}
+	//p.SetValue(false)
+	return p
 }

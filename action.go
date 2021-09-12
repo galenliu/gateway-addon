@@ -1,13 +1,11 @@
 package addon
 
 import (
-	"github.com/galenliu/gateway-addon/wot"
+
 	json "github.com/json-iterator/go"
 )
 
 type Action struct {
-	*wot.ActionAffordance
-
 	Name     string `json:"name"`
 	DeviceId string `json:"deviceId,omitempty"`
 }

@@ -2,6 +2,7 @@ package addon
 
 import (
 	"fmt"
+	"github.com/galenliu/gateway-addon/devices"
 	json "github.com/json-iterator/go"
 	"log"
 	"sync"
@@ -233,31 +234,31 @@ func (m *AddonManager) onMessage(data []byte) {
 		m.send(DevicePropertyChangedNotification, data)
 
 	case DeviceSetPinRequest:
-		var pin PIN
-		pin.Pattern = json.Get(data, "data", "pin", "pattern").GetInterface()
-		pin.Required = json.Get(data, "data", "pin", "required").ToBool()
-		messageId := json.Get(data, "data", "message_id").ToInt()
-		if messageId == 0 {
-			log.Fatal("DeviceSetPinRequest:  non  messageId")
-		}
-
-		handleFunc := func() {
-			data := make(map[string]interface{})
-			data[Aid] = adapterId
-			data[Did] = deviceId
-			data["devx"] = device
-			data["messageId"] = messageId
-			err := device.SetPin(pin)
-			if err == nil {
-				data["success"] = true
-				m.send(DeviceSetPinResponse, data)
-
-			} else {
-				data["success"] = false
-				m.send(DeviceSetPinResponse, data)
-			}
-		}
-		go handleFunc()
+		//var pin PIN
+		//pin.Pattern = json.Get(data, "data", "pin", "pattern").GetInterface()
+		//pin.Required = json.Get(data, "data", "pin", "required").ToBool()
+		//messageId := json.Get(data, "data", "message_id").ToInt()
+		//if messageId == 0 {
+		//	log.Fatal("DeviceSetPinRequest:  non  messageId")
+		//}
+		//
+		//handleFunc := func() {
+		//	data := make(map[string]interface{})
+		//	data[Aid] = adapterId
+		//	data[Did] = deviceId
+		//	data["devx"] = device
+		//	data["messageId"] = messageId
+		//	err := device.SetPin(pin)
+		//	if err == nil {
+		//		data["success"] = true
+		//		m.send(DeviceSetPinResponse, data)
+		//
+		//	} else {
+		//		data["success"] = false
+		//		m.send(DeviceSetPinResponse, data)
+		//	}
+		//}
+		//go handleFunc()
 
 	case DeviceSetCredentialsRequest:
 		messageId := json.Get(data, "data", "messageId").ToInt()
@@ -285,7 +286,7 @@ func (m *AddonManager) onMessage(data []byte) {
 	}
 }
 
-func (m *AddonManager) sendConnectedStateNotification(device *Device, connected bool) {
+func (m *AddonManager) sendConnectedStateNotification(device *devices.Device, connected bool) {
 	data := make(map[string]interface{})
 	data[Aid] = device.AdapterId
 	data[Did] = device.ID

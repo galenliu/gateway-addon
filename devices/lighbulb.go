@@ -1,8 +1,6 @@
 package devices
 
 import (
-	"addon"
-	"addon/properties"
 	"strconv"
 	"strings"
 )
@@ -14,40 +12,40 @@ type LightHandler interface {
 }
 
 type LightBulb struct {
-	*addon.Device
-	On     addon.IProperty
-	Bright addon.IProperty
-	Color  addon.IProperty
+	*Device
+	//On     addon.IProperty
+	//Bright addon.IProperty
+	//Color  addon.IProperty
 }
 
-func NewLightBulb(id, title string) *LightBulb {
-
-	lightBulb := &LightBulb{}
-	lightBulb.Device = addon.NewDevice(id, title)
-
-	lightBulb.AddTypes(addon.Light, addon.OnOffSwitch)
-	return lightBulb
-}
-
-func (light *LightBulb) AddProperty(p addon.IProperty) {
-	if p.GetAtType() == properties.TypeOnOffProperty {
-		light.On = p
-		light.Device.AddProperty(p)
-		return
-	}
-	if p.GetAtType() == properties.TypeBrightnessProperty {
-		light.Bright = p
-		light.Device.AddProperty(p)
-		return
-	}
-	if p.GetAtType() == properties.TypeColorProperty {
-
-		light.Color = p
-		light.Device.AddProperty(p)
-		return
-	}
-	light.Device.AddProperty(p)
-}
+//func NewLightBulb(id, title string) *LightBulb {
+//
+//	lightBulb := &LightBulb{}
+//	lightBulb.Device = addon.NewDevice(id, title)
+//
+//	lightBulb.AddTypes(addon.Light, addon.OnOffSwitch)
+//	return lightBulb
+//}
+//
+//func (light *LightBulb) AddProperty(p addon.IProperty) {
+//	if p.GetAtType() == properties.TypeOnOffProperty {
+//		light.On = p
+//		light.Device.AddProperty(p)
+//		return
+//	}
+//	if p.GetAtType() == properties.TypeBrightnessProperty {
+//		light.Bright = p
+//		light.Device.AddProperty(p)
+//		return
+//	}
+//	if p.GetAtType() == properties.TypeColorProperty {
+//
+//		light.Color = p
+//		light.Device.AddProperty(p)
+//		return
+//	}
+//	light.Device.AddProperty(p)
+//}
 
 func (light *LightBulb) TurnOn() {
 	//light.On.SetValue(true)
