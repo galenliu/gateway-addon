@@ -8,10 +8,10 @@ type ColorProperty struct {
 
 func NewColorProperty() *ColorProperty {
 	p := NewStringProperty(TypeColorProperty)
-	p.SetType(TypeString)
+	p.Type = TypeString
 	p.Name = ColorModel
 	p.SetValue("#121212")
-	p.SetUnit(UnitPercentage)
+	p.Unit = UnitPercentage
 
 	return &ColorProperty{p}
 }

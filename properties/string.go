@@ -3,13 +3,13 @@ package properties
 import "github.com/galenliu/gateway-addon"
 
 type StringProperty struct {
-	*addon.Property
+	*Property
 }
 
 func NewStringProperty(typ string) *StringProperty {
-	p := addon.NewProperty(typ)
-	p.SetType(TypeString)
-	return &StringProperty{p}
+	p := &StringProperty{}
+	p.Type = TypeString
+	return p
 }
 
 // SetValue sets a value
