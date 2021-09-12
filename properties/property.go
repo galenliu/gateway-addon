@@ -20,7 +20,25 @@ type Property struct {
 }
 
 func NerPropertyFormString(s string) *Property {
-	var p Property
+	data := []byte(s)
+	p := Property{}
+	p.Name = json.Get(data, "name").ToString()
+	p.Type = json.Get(data, "type").ToString()
+	p.AtType = json.Get(data, "@type").ToString()
+	p.Unit = json.Get(data, "unit").ToString()
+	p.Description = json.Get(data, "description").ToString()
+	p.Minimum = json.Get(data, "minimum").GetInterface()
+	p.Maximum = json.Get(data, "maximum").GetInterface()
+	p.ReadOnly = json.Get(data, "readOnly").ToBool()
+	var e []interface{}
+	json.Get(data, "enum").ToVal(&e)
+	p.MultipleOf = json.Get(data, "multipleOf").GetInterface()
+	var f []interface{}
+	json.Get(data, "forms").ToVal(&f)
+	p.Forms = f
+	if p.Name == "" || p.Type == "" {
+		return nil
+	}
 	_ = json.UnmarshalFromString(s, &p)
 	return &p
 
