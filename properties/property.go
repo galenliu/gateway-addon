@@ -1,22 +1,44 @@
 package properties
 
-import json "github.com/json-iterator/go"
+import (
+	rpc "github.com/galenliu/gateway-grpc"
+	"github.com/golang/protobuf/ptypes/any"
+	json "github.com/json-iterator/go"
+)
 
 type Property struct {
-	Name        string        `json:"name"`
-	Title       string        `json:"title"`
-	Type        string        `json:"type"`
-	AtType      string        `json:"@type"`
-	Unit        string        `json:"unit"`
-	Description string        `json:"description"`
-	Minimum     interface{}   `json:"minimum"`
-	Maximum     interface{}   `json:"maximum"`
-	Enum        []interface{} `json:"enum"`
-	ReadOnly    bool          `json:"readOnly"`
-	MultipleOf  interface{}   `json:"multipleOf"`
-	Forms       []interface{} `json:"forms"`
-	Value       interface{}   `json:"value"`
-	DeviceId    string        `json:"deviceId"`
+	Name        string      `json:"name"`
+	Title       string      `json:"title"`
+	Type        string      `json:"type"`
+	AtType      string      `json:"@type"`
+	Unit        string      `json:"unit"`
+	Description string      `json:"description"`
+	Minimum     interface{} `json:"minimum"`
+	Maximum     interface{} `json:"maximum"`
+	Enum        []*any.Any  `json:"enum"`
+	ReadOnly    bool        `json:"readOnly"`
+	MultipleOf  interface{} `json:"multipleOf"`
+	Links       []*rpc.Link `json:"links"`
+	Value       interface{} `json:"value"`
+}
+
+func NewPropertyFormMessage(p *rpc.Property) *Property {
+	property := &Property{
+		Name:        p.Name,
+		Title:       p.Title,
+		Type:        p.Type,
+		AtType:      p.AtType,
+		Unit:        p.Unit,
+		Description: p.Description,
+		Minimum:     p.Minimum,
+		Maximum:     p.Maximum,
+		Enum:        p.Enum,
+		ReadOnly:    p.ReadOnly,
+		MultipleOf:  p.MultipleOf,
+		Links:       p.Links,
+		Value:       p.Value,
+	}
+	return property
 }
 
 func NerPropertyFormString(s string) *Property {
@@ -33,9 +55,9 @@ func NerPropertyFormString(s string) *Property {
 	var e []interface{}
 	json.Get(data, "enum").ToVal(&e)
 	p.MultipleOf = json.Get(data, "multipleOf").GetInterface()
-	var f []interface{}
+	var f []*rpc.Link
 	json.Get(data, "forms").ToVal(&f)
-	p.Forms = f
+	p.Links = f
 	if p.Name == "" || p.Type == "" {
 		return nil
 	}
@@ -83,8 +105,8 @@ func (p *Property) GetMultipleOf() interface{} {
 	return p.MultipleOf
 }
 
-func (p *Property) GetForms() []interface{} {
-	return p.Forms
+func (p *Property) GetForms() []*rpc.Link {
+	return p.Links
 }
 
 func (p *Property) GetValue() interface{} {
