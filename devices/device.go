@@ -2,25 +2,48 @@ package devices
 
 import (
 	"github.com/galenliu/gateway-addon/properties"
+	"github.com/galenliu/gateway-grpc"
 	json "github.com/json-iterator/go"
 )
 
 type Device struct {
-	AdapterId string `json:"adapterId"`
-
+	AdapterId   string `json:"adapterId"`
 	ID          string `json:"id"`
 	AtContext   string `json:"@context"`
 	AtType      string `json:"@type"`
-	Name        string `json:"name"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 
-	Links               []string `json:"links"`
-	BaseHref            string   `json:"baseHref"`
-	PinRequired         bool     `json:"pinRequired"`
-	CredentialsRequired bool     `json:"credentialsRequired"`
+	Links               []*rpc.Link `json:"links"`
+	BaseHref            string      `json:"baseHref"`
+	PinRequired         bool        `json:"pinRequired"`
+	CredentialsRequired bool        `json:"credentialsRequired"`
+	Pin                 *rpc.DevicePin
+	Properties          map[string]*properties.Property `json:"properties"`
+}
 
-	Properties map[string]*properties.Property `json:"properties"`
+func NewDeviceFormMessage(dev *rpc.Device) *Device {
+	device := &Device{
+		AdapterId:           "",
+		ID:                  dev.Id,
+		AtContext:           dev.AtContext,
+		AtType:              dev.AtType,
+		Title:               dev.Title,
+		Description:         dev.Description,
+		Links:               dev.Links,
+		BaseHref:            dev.BaseHref,
+		PinRequired:         dev.Pin.Required,
+		CredentialsRequired: dev.CredentialsRequired,
+		Pin:                 dev.Pin,
+	}
+	if len(dev.Properties) > 0 {
+		device.Properties = make(map[string]*properties.Property)
+	}
+	for name, property := range dev.Properties {
+		device.Properties[name] = properties.NewPropertyFormMessage(property)
+	}
+
+	return device
 }
 
 func NewDeviceFormString(des string) *Device {
@@ -42,10 +65,6 @@ func (device *Device) GetAtContext() string {
 
 func (device *Device) GetAtType() string {
 	return device.AtType
-}
-
-func (device *Device) GetName() string {
-	return device.Name
 }
 
 func (device *Device) GetTitle() string {
