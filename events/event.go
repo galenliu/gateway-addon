@@ -1,0 +1,11 @@
+package events
+
+import rpc "github.com/galenliu/gateway-grpc"
+
+type Event struct {
+}
+
+func NewEventFormMessage(event *rpc.Event) *Event {
+	e := &Event{}
+	return e
+}

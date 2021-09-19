@@ -6,19 +6,19 @@ import (
 )
 
 type Property struct {
-	Name        string      `json:"name"`
-	Title       string      `json:"title"`
-	Type        string      `json:"type"`
-	AtType      string      `json:"@type"`
-	Unit        string      `json:"unit"`
-	Description string      `json:"description"`
-	Minimum     interface{} `json:"minimum"`
-	Maximum     interface{} `json:"maximum"`
-	Enum        []interface{}  `json:"enum"`
-	ReadOnly    bool        `json:"readOnly"`
-	MultipleOf  interface{} `json:"multipleOf"`
-	Links       []*rpc.Link `json:"links"`
-	Value       interface{} `json:"value"`
+	Name        string        `json:"name"`
+	Title       string        `json:"title,omitempty"`
+	Type        string        `json:"type"`
+	AtType      string        `json:"@type,omitempty"`
+	Unit        string        `json:"unit,omitempty"`
+	Description string        `json:"description,omitempty"`
+	Minimum     interface{}   `json:"minimum,omitempty"`
+	Maximum     interface{}   `json:"maximum,omitempty"`
+	Enum        []interface{} `json:"enum,omitempty"`
+	ReadOnly    bool          `json:"readOnly"`
+	MultipleOf  interface{}   `json:"multipleOf,omitempty"`
+	Links       []*rpc.Link   `json:"links"`
+	Value       interface{}   `json:"value"`
 }
 
 func NewPropertyFormMessage(p *rpc.Property) *Property {
