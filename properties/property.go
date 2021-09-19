@@ -2,7 +2,6 @@ package properties
 
 import (
 	rpc "github.com/galenliu/gateway-grpc"
-	"github.com/golang/protobuf/ptypes/any"
 	json "github.com/json-iterator/go"
 )
 
@@ -15,7 +14,7 @@ type Property struct {
 	Description string      `json:"description"`
 	Minimum     interface{} `json:"minimum"`
 	Maximum     interface{} `json:"maximum"`
-	Enum        []*any.Any  `json:"enum"`
+	Enum        []interface{}  `json:"enum"`
 	ReadOnly    bool        `json:"readOnly"`
 	MultipleOf  interface{} `json:"multipleOf"`
 	Links       []*rpc.Link `json:"links"`
@@ -32,7 +31,7 @@ func NewPropertyFormMessage(p *rpc.Property) *Property {
 		Description: p.Description,
 		Minimum:     p.Minimum,
 		Maximum:     p.Maximum,
-		Enum:        p.Enum,
+		Enum:        nil,
 		ReadOnly:    p.ReadOnly,
 		MultipleOf:  p.MultipleOf,
 		Links:       p.Links,
