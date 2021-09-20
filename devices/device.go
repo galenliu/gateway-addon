@@ -15,10 +15,11 @@ type Device struct {
 	Title       string `json:"title"`
 	Description string `json:"description,omitempty"`
 
-	Links               []*rpc.Link                     `json:"links,omitempty"`
+	Links               []*Link                         `json:"links,omitempty"`
 	PinRequired         bool                            `json:"pinRequired"`
 	CredentialsRequired bool                            `json:"credentialsRequired"`
-	Pin                 Pin                             `json:"pin"`
+	BaseHref            string                          `json:"baseHref"`
+	Pin                 *Pin                            `json:"pin,omitempty"`
 	Properties          map[string]*properties.Property `json:"properties,omitempty"`
 	Actions             map[string]*actions.Action      `json:"action,omitempty"`
 	Events              map[string]*events.Event        `json:"events,omitempty"`
@@ -29,6 +30,12 @@ type Pin struct {
 	Pattern  string `json:"pattern,omitempty"`
 }
 
+type Link struct {
+	Href      string `protobuf:"bytes,1,opt,name=href,proto3" json:"href,omitempty"`
+	Rel       string `protobuf:"bytes,2,opt,name=rel,proto3" json:"rel,omitempty"`
+	MediaType string `protobuf:"bytes,3,opt,name=mediaType,proto3" json:"mediaType,omitempty"`
+}
+
 func NewDeviceFormMessage(dev *rpc.Device) *Device {
 	device := &Device{
 		ID:                  dev.Id,
@@ -36,13 +43,25 @@ func NewDeviceFormMessage(dev *rpc.Device) *Device {
 		AtType:              dev.AtType,
 		Title:               dev.Title,
 		Description:         dev.Description,
-		Links:               dev.Links,
 		PinRequired:         dev.Pin.Required,
+		BaseHref:            dev.BaseHref,
 		CredentialsRequired: dev.CredentialsRequired,
-		Pin: Pin{
+	}
+	if len(dev.Links) > 0 {
+		device.Links = make([]*Link, 2)
+		for _, l := range dev.Links {
+			device.Links = append(device.Links, &Link{
+				Href:      l.Href,
+				Rel:       l.Rel,
+				MediaType: l.MediaType,
+			})
+		}
+	}
+	if dev.Pin != nil {
+		device.Pin = &Pin{
 			Required: dev.Pin.Required,
 			Pattern:  dev.Pin.Pattern,
-		},
+		}
 	}
 	if len(dev.Properties) > 0 {
 		device.Properties = make(map[string]*properties.Property)
@@ -57,14 +76,12 @@ func NewDeviceFormMessage(dev *rpc.Device) *Device {
 			device.Events[name] = events.NewEventFormMessage(event)
 		}
 	}
-
 	if len(dev.Actions) > 0 {
 		device.Actions = make(map[string]*actions.Action)
 		for name, action := range dev.Actions {
 			device.Actions[name] = actions.NewActionFormMessage(action)
 		}
 	}
-
 	return device
 }
 
@@ -102,4 +119,18 @@ func (device *Device) AddProperty(property *properties.Property) {
 		device.Properties = make(map[string]*properties.Property)
 	}
 	device.Properties[property.Name] = property
+}
+
+func (device *Device) AddAction(action *actions.Action) {
+	if device.Actions == nil {
+		device.Actions = make(map[string]*actions.Action)
+	}
+	device.Actions[action.Name] = action
+}
+
+func (device *Device) AddEvent(event *events.Event) {
+	if device.Events == nil {
+		device.Events = make(map[string]*events.Event)
+	}
+	device.Events[event.Name] = event
 }

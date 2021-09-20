@@ -27,24 +27,24 @@ type LightBulb struct {
 //	return lightBulb
 //}
 //
-//func (light *LightBulb) AddProperty(p addon.IProperty) {
+//func (light *LightBulb) addProperty(p addon.IProperty) {
 //	if p.GetAtType() == properties.TypeOnOffProperty {
 //		light.On = p
-//		light.Device.AddProperty(p)
+//		light.Device.addProperty(p)
 //		return
 //	}
 //	if p.GetAtType() == properties.TypeBrightnessProperty {
 //		light.Bright = p
-//		light.Device.AddProperty(p)
+//		light.Device.addProperty(p)
 //		return
 //	}
 //	if p.GetAtType() == properties.TypeColorProperty {
 //
 //		light.Color = p
-//		light.Device.AddProperty(p)
+//		light.Device.addProperty(p)
 //		return
 //	}
-//	light.Device.AddProperty(p)
+//	light.Device.addProperty(p)
 //}
 
 func (light *LightBulb) TurnOn() {
